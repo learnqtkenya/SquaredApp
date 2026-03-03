@@ -1,0 +1,31 @@
+module Squared.UI
+singleton STheme 1.0 STheme.qml
+singleton IconCodes 1.0 IconCodes.qml
+SText 1.0 SText.qml
+SIcon 1.0 SIcon.qml
+SButton 1.0 SButton.qml
+SDivider 1.0 SDivider.qml
+SSpacer 1.0 SSpacer.qml
+SCard 1.0 SCard.qml
+SCardHeader 1.0 SCardHeader.qml
+SCardBody 1.0 SCardBody.qml
+SListItem 1.0 SListItem.qml
+SBadge 1.0 SBadge.qml
+STextField 1.0 STextField.qml
+SSwitch 1.0 SSwitch.qml
+SSearchField 1.0 SSearchField.qml
+SProgressBar 1.0 SProgressBar.qml
+SLoadingSpinner 1.0 SLoadingSpinner.qml
+SEmptyState 1.0 SEmptyState.qml
+SPage 1.0 SPage.qml
+SScrollView 1.0 SScrollView.qml
+SMetric 1.0 SMetric.qml
+SToast 1.0 SToast.qml
+SDialog 1.0 SDialog.qml
+SDropdown 1.0 SDropdown.qml
+SCheckbox 1.0 SCheckbox.qml
+SRadioGroup 1.0 SRadioGroup.qml
+SSlider 1.0 SSlider.qml
+SGrid 1.0 SGrid.qml
+SSection 1.0 SSection.qml
+SAvatar 1.0 SAvatar.qml
