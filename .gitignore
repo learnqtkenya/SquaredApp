@@ -1,0 +1,39 @@
+build/
+build-*/
+*.o
+*.so
+*.a
+*.dylib
+moc_*
+qrc_*
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+.qmake.statedb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Qt Creator
+*.pro.user
+*.qmlc
+*.jsc
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+*.egg
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Squared
+*.sqapp
