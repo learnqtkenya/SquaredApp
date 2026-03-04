@@ -55,12 +55,16 @@ Flickable {
                     Layout.fillWidth: true
                     spacing: STheme.spacingSm
 
-                    Rectangle {
+                    Item {
                         Layout.preferredWidth: 36
                         Layout.preferredHeight: 36
-                        radius: STheme.radiusSmall
-                        color: "#22C55E"
-                        opacity: 0.12
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: STheme.radiusSmall
+                            color: "#22C55E"
+                            opacity: 0.12
+                        }
 
                         SIcon {
                             anchors.centerIn: parent
@@ -95,12 +99,16 @@ Flickable {
                     Layout.fillWidth: true
                     spacing: STheme.spacingSm
 
-                    Rectangle {
+                    Item {
                         Layout.preferredWidth: 36
                         Layout.preferredHeight: 36
-                        radius: STheme.radiusSmall
-                        color: STheme.error
-                        opacity: 0.12
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: STheme.radiusSmall
+                            color: STheme.error
+                            opacity: 0.12
+                        }
 
                         SIcon {
                             anchors.centerIn: parent

@@ -9,133 +9,166 @@ ApplicationWindow {
     width: 400
     height: 700
     title: "Squared"
-    color: STheme.background
+    color: "transparent"
 
     StackView {
         id: stackView
         anchors.fill: parent
-        initialItem: appListPage
+        initialItem: homePage
     }
 
     Component {
-        id: appListPage
+        id: homePage
 
-        SPage {
-            title: "Squared"
+        Item {
+            id: homeRoot
+            property string searchText: ""
 
-            SText {
-                text: "Your Apps"
-                variant: "caption"
-                color: STheme.textSecondary
+            Component {
+                id: appShellComponent
+                AppShell {}
             }
 
-            SGrid {
-                Layout.fillWidth: true
-                minColumnWidth: 160
+            function launchApp(appDir: string) {
+                homeRoot.StackView.view.push(appShellComponent,
+                    { appDirName: appDir })
+            }
 
-                Repeater {
-                    model: ListModel {
-                        ListElement {
-                            appName: "Hello World"
-                            appDir: "hello-world"
-                            appDesc: "A starter app"
-                            appIcon: "\ue9b2"
-                            appColor: "#6366F1"
-                        }
-                        ListElement {
-                            appName: "Counter"
-                            appDir: "counter"
-                            appDesc: "Persistent counter"
-                            appIcon: "\uead0"
-                            appColor: "#2196F3"
-                        }
-                        ListElement {
-                            appName: "Todo"
-                            appDir: "todo"
-                            appDesc: "Task manager"
-                            appIcon: "\ue614"
-                            appColor: "#FF9800"
-                        }
-                        ListElement {
-                            appName: "Finance"
-                            appDir: "finance"
-                            appDesc: "Track finances"
-                            appIcon: "\ue850"
-                            appColor: "#22C55E"
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: STheme.spacingMd
+                spacing: STheme.spacingLg
+
+                // Search bar
+                TextField {
+                    Layout.fillWidth: true
+                    placeholderText: "Search apps..."
+                    font: STheme.body
+                    color: STheme.text
+                    placeholderTextColor: STheme.textSecondary
+                    leftPadding: 40
+                    topPadding: 10
+                    bottomPadding: 10
+
+                    onTextChanged: homeRoot.searchText = text
+
+                    background: Rectangle {
+                        color: STheme.surface
+                        radius: STheme.radiusLarge
+                        border.color: STheme.border
+                        border.width: 1
+
+                        SIcon {
+                            icon: IconCodes.search
+                            size: 20
+                            color: STheme.textSecondary
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.leftMargin: 12
                         }
                     }
+                }
 
-                    delegate: Item {
-                        id: cardDelegate
-                        required property string appName
-                        required property string appDir
-                        required property string appDesc
-                        required property string appIcon
-                        required property string appColor
+                // App icon grid
+                Flickable {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    contentHeight: grid.implicitHeight
+                    clip: true
 
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 160
+                    GridLayout {
+                        id: grid
+                        width: parent.width
+                        columns: 4
+                        columnSpacing: STheme.spacingMd
+                        rowSpacing: STheme.spacingLg
 
-                        SCard {
-                            anchors.fill: parent
+                        Repeater {
+                            model: ListModel {
+                                ListElement {
+                                    appName: "Hello World"
+                                    appDir: "hello-world"
+                                    appIcon: "\ue9b2"
+                                    appColor: "#6366F1"
+                                }
+                                ListElement {
+                                    appName: "Counter"
+                                    appDir: "counter"
+                                    appIcon: "\uead0"
+                                    appColor: "#2196F3"
+                                }
+                                ListElement {
+                                    appName: "Todo"
+                                    appDir: "todo"
+                                    appIcon: "\ue614"
+                                    appColor: "#FF9800"
+                                }
+                                ListElement {
+                                    appName: "Finance"
+                                    appDir: "finance"
+                                    appIcon: "\ue850"
+                                    appColor: "#22C55E"
+                                }
+                            }
 
-                            ColumnLayout {
+                            delegate: Item {
+                                id: iconDelegate
+                                required property string appName
+                                required property string appDir
+                                required property string appIcon
+                                required property string appColor
+
+                                visible: homeRoot.searchText === ""
+                                         || appName.toLowerCase().indexOf(homeRoot.searchText.toLowerCase()) >= 0
                                 Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                spacing: STheme.spacingSm
+                                Layout.preferredHeight: visible ? 80 : 0
 
-                                Item { Layout.fillHeight: true }
+                                ColumnLayout {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.top: parent.top
+                                    spacing: STheme.spacingSm
 
-                                Rectangle {
-                                    Layout.preferredWidth: 48
-                                    Layout.preferredHeight: 48
-                                    Layout.alignment: Qt.AlignHCenter
-                                    radius: STheme.radiusMedium
-                                    color: cardDelegate.appColor
-                                    opacity: 0.12
+                                    Item {
+                                        Layout.preferredWidth: 48
+                                        Layout.preferredHeight: 48
+                                        Layout.alignment: Qt.AlignHCenter
 
-                                    SIcon {
-                                        anchors.centerIn: parent
-                                        icon: cardDelegate.appIcon
-                                        size: 28
-                                        color: cardDelegate.appColor
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            radius: STheme.radiusMedium
+                                            color: iconDelegate.appColor
+                                            opacity: 0.12
+                                        }
+
+                                        SIcon {
+                                            anchors.centerIn: parent
+                                            icon: iconDelegate.appIcon
+                                            size: 28
+                                            color: iconDelegate.appColor
+                                        }
+                                    }
+
+                                    SText {
+                                        text: iconDelegate.appName
+                                        variant: "caption"
+                                        color: "#FFFFFF"
+                                        elide: Text.ElideRight
+                                        Layout.alignment: Qt.AlignHCenter
+                                        Layout.maximumWidth: 72
+                                        horizontalAlignment: Text.AlignHCenter
                                     }
                                 }
 
-                                SText {
-                                    text: cardDelegate.appName
-                                    variant: "subheading"
-                                    elide: Text.ElideRight
-                                    Layout.fillWidth: true
-                                    horizontalAlignment: Text.AlignHCenter
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: homeRoot.launchApp(iconDelegate.appDir)
                                 }
-
-                                SText {
-                                    text: cardDelegate.appDesc
-                                    variant: "caption"
-                                    color: STheme.textSecondary
-                                    elide: Text.ElideRight
-                                    Layout.fillWidth: true
-                                    horizontalAlignment: Text.AlignHCenter
-                                }
-
-                                Item { Layout.fillHeight: true }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                stackView.push(appShellComponent,
-                                    { appDirName: cardDelegate.appDir, appTitle: cardDelegate.appName })
                             }
                         }
                     }
                 }
             }
-
-            Item { Layout.fillHeight: true }
         }
     }
 

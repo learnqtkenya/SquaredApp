@@ -21,6 +21,7 @@ Item {
         text: root.icon
         font.family: "Material Symbols Outlined"
         font.pixelSize: root.size
+        font.weight: Font.Normal
         color: STheme.text
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
