@@ -10,6 +10,10 @@ find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 QuickTest Test)
 qt_standard_project_setup(REQUIRES 6.5)
 
 add_subdirectory(src/sdk/ui)
+add_subdirectory(src/sdk/storage)
+add_subdirectory(src/sdk/core)
+add_subdirectory(src/core)
+add_subdirectory(src)
 
 enable_testing()
 add_subdirectory(tests)

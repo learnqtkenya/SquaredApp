@@ -1,0 +1,9 @@
+{
+    "id": "com.squared.finance",
+    "name": "Finance Tracker",
+    "version": "1.0.0",
+    "entry": "Main.qml",
+    "icon": "assets/icon.png",
+    "author": "Squared Computing",
+    "description": "Track income and expenses"
+}

@@ -18,6 +18,8 @@ Makefile
 *.swp
 *.swo
 *~
+.cache/
+.qmlls.ini
 
 # Qt Creator
 *.pro.user

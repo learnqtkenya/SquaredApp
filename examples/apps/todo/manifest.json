@@ -1,0 +1,9 @@
+{
+    "id": "com.squared.todo",
+    "name": "Todo",
+    "version": "1.0.0",
+    "entry": "Main.qml",
+    "icon": "assets/icon.png",
+    "author": "Squared Computing",
+    "description": "A simple todo list"
+}

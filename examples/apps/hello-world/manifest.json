@@ -1,0 +1,9 @@
+{
+    "id": "com.squared.helloworld",
+    "name": "Hello World",
+    "version": "1.0.0",
+    "entry": "Main.qml",
+    "icon": "assets/icon.png",
+    "author": "Squared Computing",
+    "description": "A simple starter app"
+}

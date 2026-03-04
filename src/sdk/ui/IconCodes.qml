@@ -57,6 +57,13 @@ QtObject {
     readonly property string person: "\uf0d3"
     readonly property string group: "\uea21"
 
+    // Finance
+    readonly property string wallet: "\ue850"
+    readonly property string trendingUp: "\ue8e5"
+    readonly property string trendingDown: "\ue8e3"
+    readonly property string receipt: "\ue8b0"
+    readonly property string accountBalance: "\ue84f"
+
     // Misc
     readonly property string category: "\ue574"
     readonly property string dashboard: "\ue871"

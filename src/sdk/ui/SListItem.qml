@@ -13,7 +13,7 @@ Rectangle {
 
     Layout.fillWidth: true
     implicitWidth: 300
-    implicitHeight: Math.max(contentRow.implicitHeight + STheme.spacingMd * 2, 56)
+    implicitHeight: Math.max(contentRow.implicitHeight + STheme.spacingSm * 2, 44)
     color: mouseArea.pressed ? STheme.surfaceVariant : "transparent"
     radius: STheme.radiusSmall
 
@@ -28,7 +28,7 @@ Rectangle {
     RowLayout {
         id: contentRow
         anchors.fill: parent
-        anchors.margins: STheme.spacingMd
+        anchors.margins: STheme.spacingSm
         spacing: STheme.spacingMd
 
         SIcon {

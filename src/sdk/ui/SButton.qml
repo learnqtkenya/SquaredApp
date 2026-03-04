@@ -11,7 +11,7 @@ AbstractButton {
     implicitWidth: Math.max(contentRow.implicitWidth + STheme.spacingLg, 44)
     implicitHeight: 44
 
-    opacity: enabled ? 1.0 : 0.5
+    opacity: enabled ? 1.0 : 0.6
 
     background: Rectangle {
         radius: STheme.radiusSmall
@@ -45,6 +45,7 @@ AbstractButton {
                 icon: root.iconSource
                 size: 18
                 color: {
+                    if (!root.enabled) return STheme.textSecondary
                     switch (root.style) {
                     case "Primary": return STheme.surface
                     case "Danger": return STheme.surface
@@ -60,6 +61,7 @@ AbstractButton {
                 text: root.text
                 variant: "body"
                 color: {
+                    if (!root.enabled) return STheme.textSecondary
                     switch (root.style) {
                     case "Primary": return STheme.surface
                     case "Danger": return STheme.surface

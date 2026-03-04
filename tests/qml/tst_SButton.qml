@@ -32,7 +32,7 @@ TestCase {
     }
 
     function test_disabledOpacity() {
-        compare(disabled.opacity, 0.5)
+        compare(disabled.opacity, 0.6)
         compare(primary.opacity, 1.0)
     }
 

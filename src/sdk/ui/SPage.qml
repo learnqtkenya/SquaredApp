@@ -8,7 +8,6 @@ Rectangle {
     default property alias content: contentColumn.data
 
     color: STheme.background
-    anchors.fill: parent ? parent : undefined
 
     ColumnLayout {
         id: contentColumn
