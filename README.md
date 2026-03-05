@@ -39,7 +39,7 @@ Requires Android SDK, NDK r27+, and JDK 17+. Set `ANDROID_SDK_ROOT`, `ANDROID_ND
 QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure
 ```
 
-37 tests: 29 QML component tests + 8 C++ tests covering manifest parsing, app runner, storage, installer, catalog, registry, secure storage, and network client.
+38 tests: 30 QML component tests + 8 C++ tests covering manifest parsing, app runner, storage, installer, catalog, registry, secure storage, and network client.
 
 ## Run
 
@@ -70,7 +70,9 @@ Downloads the latest binary for your platform. Installs to `~/.local/bin` (Linux
 ### Usage
 
 ```bash
+squared setup                 # Install SDK for IDE autocomplete
 squared init my-app           # Scaffold a new app project
+squared run my-app            # Preview in Squared host app
 squared validate my-app       # Check manifest and file structure
 squared package my-app        # Create .sqapp bundle
 squared publish app.sqapp     # Publish metadata to store server
@@ -78,10 +80,27 @@ squared update                # Update to latest version
 squared version               # Print installed version
 ```
 
+### IDE Setup
+
+Run `squared setup` once to install the SDK for IDE intellisense. This gives you autocomplete for:
+- **Squared.UI** — 28 themed QML components (SButton, SCard, SPage, etc.) plus STheme and IconCodes singletons
+- **Squared.SDK** — Storage, SecureStorage, Network, and App APIs
+
+Projects created with `squared init` include a `CMakeLists.txt` that references the SDK. Run `cmake -B build` in your project to generate type info for qmlls.
+
+Works with any editor that supports Qt's QML Language Server (qmlls):
+- **Qt Creator** — built-in support
+- **VS Code** — install the [Qt QML](https://marketplace.visualstudio.com/items?itemName=nicemicro.qml-support) extension
+- **Neovim** — configure qmlls as an LSP server
+
+### Running Apps
+
+`squared run` launches your app in the Squared host app's dev mode. The host binary must be accessible — either on `PATH` or at `~/.squared/bin/Squared`.
+
 ### Build from source
 
 ```bash
-cd tools/squared-cli && go build -o squared .
+cd tools/squared-cli && ./sync-sdk.sh && go build -o squared .
 ```
 
 ## Store Server

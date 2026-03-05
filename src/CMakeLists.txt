@@ -4,6 +4,7 @@ set_source_files_properties(../qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qm
 set_source_files_properties(../qml/AppShell.qml PROPERTIES QT_RESOURCE_ALIAS AppShell.qml)
 set_source_files_properties(../qml/InstalledPage.qml PROPERTIES QT_RESOURCE_ALIAS InstalledPage.qml)
 set_source_files_properties(../qml/StorePage.qml PROPERTIES QT_RESOURCE_ALIAS StorePage.qml)
+set_source_files_properties(../qml/DevWindow.qml PROPERTIES QT_RESOURCE_ALIAS DevWindow.qml)
 
 qt_add_qml_module(Squared
     URI Squared.Host
@@ -14,6 +15,7 @@ qt_add_qml_module(Squared
         ../qml/AppShell.qml
         ../qml/InstalledPage.qml
         ../qml/StorePage.qml
+        ../qml/DevWindow.qml
 )
 
 target_link_libraries(Squared PRIVATE
@@ -24,6 +26,7 @@ target_link_libraries(Squared PRIVATE
     SquaredCoreSDK
     SquaredNetwork
     SquaredUIplugin
+    SquaredSDKplugin
 )
 
 target_compile_definitions(Squared PRIVATE

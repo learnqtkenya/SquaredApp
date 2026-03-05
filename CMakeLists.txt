@@ -25,6 +25,7 @@ add_subdirectory(src/sdk/ui)
 add_subdirectory(src/sdk/storage)
 add_subdirectory(src/sdk/core)
 add_subdirectory(src/sdk/network)
+add_subdirectory(src/sdk/api)
 add_subdirectory(src/core)
 add_subdirectory(src)
 

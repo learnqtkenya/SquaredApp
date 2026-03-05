@@ -15,6 +15,7 @@ const usage = `squared — Squared app developer CLI
 
 Usage:
   squared init <name>
+  squared setup [--force]
   squared validate [path]
   squared package [path] [--output <file>]
   squared publish <sqapp> [--server <url>] [--token <token>] [--package-url <url>]
@@ -34,6 +35,8 @@ func main() {
 	switch os.Args[1] {
 	case "init":
 		err = runInit(os.Args[2:])
+	case "setup":
+		err = runSetup(os.Args[2:])
 	case "validate":
 		code := runValidate(os.Args[2:])
 		os.Exit(code)
@@ -42,7 +45,7 @@ func main() {
 	case "publish":
 		err = runPublish(os.Args[2:])
 	case "run":
-		runRun()
+		err = runRunCmd(os.Args[2:])
 	case "update":
 		err = cmd.RunUpdate(version)
 	case "version", "--version", "-v":
@@ -71,6 +74,15 @@ func runInit(args []string) error {
 		return fmt.Errorf("usage: squared init <name>")
 	}
 	return cmd.RunInit(fs.Arg(0))
+}
+
+func runSetup(args []string) error {
+	fs := flag.NewFlagSet("setup", flag.ContinueOnError)
+	force := fs.Bool("force", false, "reinstall SDK even if already present")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	return cmd.RunSetup(*force)
 }
 
 func runValidate(args []string) int {
@@ -107,10 +119,10 @@ func runPublish(args []string) error {
 	return cmd.RunPublish(ctx, fs.Arg(0), *server, *token, *packageURL)
 }
 
-func runRun() {
-	fmt.Println("The 'run' command is not yet implemented.")
-	fmt.Println("To preview your app, build and run the Squared host app:")
-	fmt.Println("  1. Copy your app to examples/apps/<name>/")
-	fmt.Println("  2. cmake --build build && ./build/src/Squared")
-	os.Exit(0)
+func runRunCmd(args []string) error {
+	fs := flag.NewFlagSet("run", flag.ContinueOnError)
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	return cmd.RunRun(fs.Arg(0))
 }

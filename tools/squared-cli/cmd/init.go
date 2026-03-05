@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"squared-cli/internal/manifest"
+	"squared-cli/internal/sdk"
 )
 
 var validName = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9._-]*$`)
@@ -52,6 +53,7 @@ func RunInit(name string) error {
 	qml := fmt.Sprintf(`import QtQuick
 import QtQuick.Layouts
 import Squared.UI
+import Squared.SDK
 
 SPage {
     title: "%s"
@@ -68,7 +70,33 @@ SPage {
 		return fmt.Errorf("writing Main.qml: %w", err)
 	}
 
+	// Generate CMakeLists.txt for IDE autocomplete (qmlls)
+	sdkDir, _ := sdk.Dir()
+	cmakeContent := fmt.Sprintf(`cmake_minimum_required(VERSION 3.21)
+project(%s LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(Qt6 REQUIRED COMPONENTS Quick)
+qt_standard_project_setup()
+
+# Squared SDK — provides IDE autocomplete for Squared.UI and Squared.SDK
+add_subdirectory(%s sdk)
+`, alphaOnly(name), sdkDir)
+
+	if err := os.WriteFile(filepath.Join(name, "CMakeLists.txt"), []byte(cmakeContent), 0o644); err != nil {
+		return fmt.Errorf("writing CMakeLists.txt: %w", err)
+	}
+
 	fmt.Printf("Created %s/\n", name)
+	fmt.Println()
+	fmt.Println("Next steps:")
+	fmt.Printf("  cd %s\n", name)
+	fmt.Println("  squared run              # preview in Squared host app")
+	fmt.Println()
+	fmt.Println("For IDE autocomplete (optional):")
+	fmt.Println("  cmake -B build           # generates qmlls type info")
 	return nil
 }
 

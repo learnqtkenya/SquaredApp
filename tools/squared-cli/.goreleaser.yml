@@ -2,6 +2,10 @@ version: 2
 
 project_name: squared
 
+before:
+  hooks:
+    - ./sync-sdk.sh
+
 builds:
   - main: .
     binary: squared

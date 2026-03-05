@@ -39,6 +39,9 @@ Thumbs.db
 
 # Go
 tools/squared-cli/squared
+tools/squared-cli/internal/sdk/files/ui/
+tools/squared-cli/internal/sdk/files/api/
+tools/squared-cli/internal/sdk/files/CMakeLists.txt
 
 # Squared
 *.sqapp

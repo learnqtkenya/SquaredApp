@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QDir>
+#include <QFileInfo>
 #include <QFontDatabase>
 #include <QStandardPaths>
 #include <QUrl>
@@ -24,6 +25,17 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     app.setOrganizationName(QStringLiteral("Squared"));
     app.setApplicationName(QStringLiteral("Squared"));
+
+    // Check for --dev <path> flag
+    QString devAppPath;
+    auto args = app.arguments();
+    for (int i = 1; i < args.size(); ++i) {
+        if (args[i] == QStringLiteral("--dev") && i + 1 < args.size()) {
+            devAppPath = QFileInfo(args[i + 1]).absoluteFilePath();
+            break;
+        }
+    }
+    bool devMode = !devAppPath.isEmpty();
 
     QFontDatabase::addApplicationFont(
         QStringLiteral(":/qt/qml/Squared/UI/fonts/Inter-Variable.ttf"));
@@ -65,8 +77,12 @@ int main(int argc, char *argv[])
     ctx->setContextProperty(QStringLiteral("examplesPath"),
                             QStringLiteral(EXAMPLES_PATH));
 
-    // Seed registry with example apps (adds any missing examples)
-    {
+    if (devMode) {
+        // Dev mode: launch a single app in a minimal window
+        ctx->setContextProperty(QStringLiteral("devAppPath"), devAppPath);
+        engine.loadFromModule("Squared.Host", "DevWindow");
+    } else {
+        // Seed registry with example apps (adds any missing examples)
         auto exPath = QStringLiteral(EXAMPLES_PATH);
         if (!exPath.isEmpty()) {
             struct { const char *dir; const char *name; const char *icon;
@@ -99,9 +115,9 @@ int main(int argc, char *argv[])
                 registry.addApp(entry);
             }
         }
-    }
 
-    engine.loadFromModule("Squared.Host", "Main");
+        engine.loadFromModule("Squared.Host", "Main");
+    }
 
     if (engine.rootObjects().isEmpty())
         return -1;
