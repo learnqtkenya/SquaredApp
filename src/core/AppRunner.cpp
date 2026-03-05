@@ -1,6 +1,8 @@
 #include "AppRunner.h"
 #include "AppManifest.h"
 #include "AppStorage.h"
+#include "SecureStorage.h"
+#include "NetworkClient.h"
 #include "SquaredApp.h"
 
 #include <QElapsedTimer>
@@ -47,10 +49,14 @@ void AppRunner::launch(const AppManifest &manifest, QQuickItem *container)
 
     m_appContext = new QQmlContext(m_engine->rootContext());
     m_storage = new AppStorage(manifest.id, m_storageRoot);
+    m_secureStorage = new SecureStorage(manifest.id, m_storageRoot, false, m_engine);
     m_app = new SquaredApp(manifest.id, manifest.version);
+    m_network = new NetworkClient(manifest.id, m_engine);
 
     m_appContext->setContextProperty(QStringLiteral("Storage"), m_storage);
+    m_appContext->setContextProperty(QStringLiteral("SecureStorage"), m_secureStorage);
     m_appContext->setContextProperty(QStringLiteral("App"), m_app);
+    m_appContext->setContextProperty(QStringLiteral("Network"), m_network);
 
     auto entryPath = manifest.basePath + QStringLiteral("/qml/") + manifest.entry;
     QQmlComponent component(m_engine, QUrl::fromLocalFile(entryPath));
@@ -167,8 +173,14 @@ void AppRunner::cleanup()
     delete m_storage;
     m_storage = nullptr;
 
+    delete m_secureStorage;
+    m_secureStorage = nullptr;
+
     delete m_app;
     m_app = nullptr;
+
+    delete m_network;
+    m_network = nullptr;
 
     delete m_appContext;
     m_appContext = nullptr;

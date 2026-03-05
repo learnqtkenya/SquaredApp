@@ -1,0 +1,9 @@
+{
+    "id": "com.squared.weather",
+    "name": "Weather",
+    "version": "1.0.0",
+    "entry": "Main.qml",
+    "icon": "assets/icon.png",
+    "author": "Squared Computing",
+    "description": "Live weather using SecureStorage + Network"
+}

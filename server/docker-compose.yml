@@ -1,0 +1,49 @@
+services:
+  squared-store:
+    container_name: squared-store
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      DATABASE_URL: "postgres://squared:squared@db:5432/squared?sslmode=disable"
+      MIGRATIONS_PATH: "file:///app/migrations"
+      ALLOWED_ORIGINS: "*"
+      SECRETS_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      LOG_LEVEL: "info"
+      RATE_LIMIT: "10"
+      RATE_BURST: "20"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: squared
+      POSTGRES_PASSWORD: squared
+      POSTGRES_DB: squared
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U squared"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  pgdata:

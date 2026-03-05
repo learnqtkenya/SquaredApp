@@ -8,6 +8,8 @@ QT_FORWARD_DECLARE_CLASS(QQuickItem)
 
 struct AppManifest;
 class AppStorage;
+class SecureStorage;
+class NetworkClient;
 class SquaredApp;
 
 class AppRunner : public QObject {
@@ -49,7 +51,9 @@ private:
     QQmlContext *m_appContext = nullptr;
     QQuickItem *m_rootItem = nullptr;
     AppStorage *m_storage = nullptr;
+    SecureStorage *m_secureStorage = nullptr;
     SquaredApp *m_app = nullptr;
+    NetworkClient *m_network = nullptr;
     QString m_currentAppId;
     QString m_addedImportPath;
 };
