@@ -13,6 +13,7 @@
 #include "NetworkReply.h"
 #include "PackageDownloader.h"
 #include "SecureStorageReply.h"
+#include "ThemeManager.h"
 
 #ifndef EXAMPLES_PATH
 #define EXAMPLES_PATH ""
@@ -21,6 +22,8 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
+    app.setOrganizationName(QStringLiteral("Squared"));
+    app.setApplicationName(QStringLiteral("Squared"));
 
     QFontDatabase::addApplicationFont(
         QStringLiteral(":/qt/qml/Squared/UI/fonts/Inter-Variable.ttf"));
@@ -41,6 +44,7 @@ int main(int argc, char *argv[])
 
     QDir().mkpath(installDir);
 
+    ThemeManager themeManager;
     AppRunner runner(&engine, storageRoot);
     AppRegistry registry(registryPath);
     AppInstaller installer;
@@ -50,6 +54,7 @@ int main(int argc, char *argv[])
     AppCatalog catalog(catalogUrl);
 
     auto *ctx = engine.rootContext();
+    ctx->setContextProperty(QStringLiteral("themeManager"), &themeManager);
     ctx->setContextProperty(QStringLiteral("appRunner"), &runner);
     ctx->setContextProperty(QStringLiteral("appRegistry"), &registry);
     ctx->setContextProperty(QStringLiteral("installedAppsModel"), registry.model());

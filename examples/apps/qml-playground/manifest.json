@@ -5,5 +5,6 @@
     "entry": "Main.qml",
     "icon": "assets/icon.png",
     "author": "Squared Computing",
-    "description": "Write and run QML code live"
+    "description": "Write and run QML code live",
+    "permissions": []
 }

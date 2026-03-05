@@ -62,6 +62,7 @@ QtObject {
     readonly property string battery: "\ue1a4"
     readonly property string sensors: "\ue51e"
     readonly property string lightMode: "\ue518"
+    readonly property string darkMode: "\ue51c"
     readonly property string speed: "\ue9e4"
     readonly property string waterDrop: "\ue798"
 

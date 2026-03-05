@@ -24,5 +24,13 @@ add_subdirectory(src/sdk/network)
 add_subdirectory(src/core)
 add_subdirectory(src)
 
+if(ANDROID)
+    set_target_properties(Squared PROPERTIES
+        QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android"
+    )
+    set_property(TARGET Squared PROPERTY QT_ANDROID_TARGET_SDK_VERSION 34)
+    set_property(TARGET Squared PROPERTY QT_ANDROID_MIN_SDK_VERSION 26)
+endif()
+
 enable_testing()
 add_subdirectory(tests)

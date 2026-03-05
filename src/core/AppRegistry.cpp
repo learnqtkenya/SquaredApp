@@ -158,6 +158,15 @@ bool AppRegistry::isInstalled(const QString &appId) const
     return indexOf(appId) >= 0;
 }
 
+QString AppRegistry::appName(const QString &dirName) const
+{
+    for (const auto &e : m_entries) {
+        if (e.dirName == dirName)
+            return e.name;
+    }
+    return dirName;
+}
+
 int AppRegistry::indexOf(const QString &appId) const
 {
     for (int i = 0; i < m_entries.size(); ++i) {

@@ -3,12 +3,27 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Squared.UI
 
-Item {
+Rectangle {
     id: storePage
+    color: STheme.background
 
     signal installRequested(string appId, url packageUrl)
 
     property var _stack: null
+    property string searchText: ""
+    property string selectedCategory: "All"
+    readonly property var categories: ["All", "Productivity", "Utility", "Developer", "Finance", "IoT"]
+
+    function filteredEntries() {
+        var entries = appCatalog ? appCatalog.entries : []
+        return entries.filter(function(e) {
+            var matchSearch = storePage.searchText === ""
+                || (e.name || "").toLowerCase().indexOf(storePage.searchText.toLowerCase()) >= 0
+            var matchCategory = storePage.selectedCategory === "All"
+                || (e.category || "") === storePage.selectedCategory
+            return matchSearch && matchCategory
+        })
+    }
 
     Component.onCompleted: {
         _stack = storePage.StackView.view
@@ -36,7 +51,7 @@ Item {
                     anchors.centerIn: parent
                     icon: IconCodes.arrowBack
                     size: 22
-                    color: "#FFFFFF"
+                    color: STheme.text
                 }
 
                 MouseArea {
@@ -50,8 +65,61 @@ Item {
             SText {
                 text: "Store"
                 variant: "heading"
-                color: "#FFFFFF"
+                color: STheme.text
                 Layout.fillWidth: true
+            }
+        }
+
+        // Search field
+        SSearchField {
+            Layout.fillWidth: true
+            placeholderText: "Search store..."
+            onTextChanged: storePage.searchText = text
+        }
+
+        // Category pills
+        ScrollView {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 36
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            ScrollBar.vertical.policy: ScrollBar.AlwaysOff
+            contentWidth: categoryRow.width
+            clip: true
+
+            RowLayout {
+                id: categoryRow
+                spacing: STheme.spacingSm
+
+                Repeater {
+                    model: storePage.categories
+
+                    Rectangle {
+                        required property string modelData
+                        Layout.preferredHeight: 32
+                        Layout.preferredWidth: pillText.implicitWidth + STheme.spacingMd * 2
+                        radius: STheme.radiusLarge
+                        color: storePage.selectedCategory === modelData
+                               ? STheme.primary : STheme.surfaceVariant
+                        border.width: 1
+                        border.color: storePage.selectedCategory === modelData
+                                      ? STheme.primary : STheme.border
+
+                        SText {
+                            id: pillText
+                            anchors.centerIn: parent
+                            text: modelData
+                            variant: "caption"
+                            color: storePage.selectedCategory === modelData
+                                   ? "#FFFFFF" : STheme.text
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: storePage.selectedCategory = modelData
+                        }
+                    }
+                }
             }
         }
 
@@ -116,9 +184,9 @@ Item {
             clip: true
 
             cellWidth: width / 2
-            cellHeight: 160
+            cellHeight: 180
 
-            model: appCatalog ? appCatalog.entries : []
+            model: storePage.filteredEntries()
 
             delegate: Item {
                 id: gridDelegate
@@ -193,6 +261,23 @@ Item {
                             elide: Text.ElideRight
                             maximumLineCount: 2
                             wrapMode: Text.WordWrap
+                        }
+
+                        // Permission badges
+                        Flow {
+                            visible: (gridDelegate.modelData.permissions || []).length > 0
+                            Layout.fillWidth: true
+                            spacing: STheme.spacingXs
+
+                            Repeater {
+                                model: gridDelegate.modelData.permissions || []
+                                SBadge {
+                                    required property string modelData
+                                    text: modelData
+                                    badgeColor: STheme.primaryVariant
+                                    textColor: "#FFFFFF"
+                                }
+                            }
                         }
                     }
                 }

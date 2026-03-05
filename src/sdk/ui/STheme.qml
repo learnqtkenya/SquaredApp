@@ -2,15 +2,17 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    // Colors
+    property bool dark: false
+
+    // Colors — dynamic based on dark mode
     readonly property color primary: "#6366F1"
     readonly property color primaryVariant: "#4F46E5"
-    readonly property color surface: "#FFFFFF"
-    readonly property color surfaceVariant: "#F8FAFC"
-    readonly property color background: "#F1F5F9"
-    readonly property color text: "#0F172A"
-    readonly property color textSecondary: "#64748B"
-    readonly property color border: "#E2E8F0"
+    property color surface: dark ? "#1E293B" : "#FFFFFF"
+    property color surfaceVariant: dark ? "#334155" : "#F8FAFC"
+    property color background: dark ? "#0F172A" : "#F1F5F9"
+    property color text: dark ? "#F1F5F9" : "#0F172A"
+    property color textSecondary: dark ? "#94A3B8" : "#64748B"
+    property color border: dark ? "#475569" : "#E2E8F0"
     readonly property color error: "#EF4444"
     readonly property color success: "#22C55E"
 

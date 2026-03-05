@@ -11,10 +11,28 @@ ApplicationWindow {
     title: " "
     color: "transparent"
 
+    Component.onCompleted: {
+        if (themeManager)
+            STheme.dark = themeManager.dark
+    }
+
     StackView {
         id: stackView
         anchors.fill: parent
         initialItem: homePage
+
+        pushEnter: Transition {
+            PropertyAnimation { property: "x"; from: stackView.width; to: 0; duration: 250; easing.type: Easing.OutCubic }
+        }
+        pushExit: Transition {
+            PropertyAnimation { property: "x"; from: 0; to: -stackView.width * 0.3; duration: 250; easing.type: Easing.OutCubic }
+        }
+        popEnter: Transition {
+            PropertyAnimation { property: "x"; from: -stackView.width * 0.3; to: 0; duration: 250; easing.type: Easing.OutCubic }
+        }
+        popExit: Transition {
+            PropertyAnimation { property: "x"; from: 0; to: stackView.width; duration: 250; easing.type: Easing.OutCubic }
+        }
     }
 
     Component {
@@ -48,46 +66,57 @@ ApplicationWindow {
                 anchors.margins: STheme.spacingMd
                 spacing: STheme.spacingSm
 
-                // Search bar + catalog icon
+                // Search bar + theme toggle + catalog icon
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: STheme.spacingSm
 
-                    TextField {
+                    SSearchField {
                         Layout.fillWidth: true
                         placeholderText: "Search apps..."
-                        font: STheme.body
-                        color: STheme.text
-                        placeholderTextColor: STheme.textSecondary
-                        leftPadding: 40
-                        topPadding: 10
-                        bottomPadding: 10
-
                         onTextChanged: homeRoot.searchText = text
+                    }
 
-                        background: Rectangle {
-                            color: STheme.surface
-                            radius: STheme.radiusLarge
-                            border.color: STheme.border
-                            border.width: 1
+                    Rectangle {
+                        Layout.preferredWidth: 36
+                        Layout.preferredHeight: 36
+                        radius: STheme.radiusSmall
+                        color: mouseTheme.pressed ? STheme.surfaceVariant : "transparent"
 
-                            SIcon {
-                                icon: IconCodes.search
-                                size: 20
-                                color: STheme.textSecondary
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.left: parent.left
-                                anchors.leftMargin: 12
+                        SIcon {
+                            anchors.centerIn: parent
+                            icon: STheme.dark ? IconCodes.lightMode : IconCodes.darkMode
+                            size: 22
+                            color: "#FFFFFF"
+                        }
+
+                        MouseArea {
+                            id: mouseTheme
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                STheme.dark = !STheme.dark
+                                if (themeManager)
+                                    themeManager.dark = STheme.dark
                             }
                         }
                     }
 
-                    SIcon {
-                        icon: IconCodes.store
-                        size: 24
-                        color: STheme.primary
+                    Rectangle {
+                        Layout.preferredWidth: 36
+                        Layout.preferredHeight: 36
+                        radius: STheme.radiusSmall
+                        color: mouseStore.pressed ? STheme.surfaceVariant : "transparent"
+
+                        SIcon {
+                            anchors.centerIn: parent
+                            icon: IconCodes.store
+                            size: 22
+                            color: STheme.primary
+                        }
 
                         MouseArea {
+                            id: mouseStore
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: homeRoot.StackView.view.push(storePageComponent)

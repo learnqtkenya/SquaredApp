@@ -1,5 +1,6 @@
 #include <QtTest>
 #include <QTemporaryDir>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include "AppManifest.h"
@@ -112,6 +113,38 @@ private slots:
         auto result = AppManifest::fromDirectory(dir.path());
         QVERIFY(result.has_value());
         QCOMPARE(result->basePath, dir.path());
+    }
+
+    void permissionsParsed()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        auto json = validJson();
+        json[QStringLiteral("permissions")] = QJsonArray{
+            QStringLiteral("network"),
+            QStringLiteral("secure-storage")
+        };
+        writeManifest(dir.path(), json);
+
+        auto result = AppManifest::fromDirectory(dir.path());
+        QVERIFY(result.has_value());
+        QCOMPARE(result->permissions.size(), 2);
+        QVERIFY(result->permissions.contains(u"network"));
+        QVERIFY(result->permissions.contains(u"secure-storage"));
+        QVERIFY(result->hasPermission(QStringLiteral("network")));
+        QVERIFY(!result->hasPermission(QStringLiteral("storage")));
+    }
+
+    void missingPermissionsDefaultsToEmpty()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        writeManifest(dir.path(), validJson());
+
+        auto result = AppManifest::fromDirectory(dir.path());
+        QVERIFY(result.has_value());
+        QVERIFY(result->permissions.isEmpty());
+        QVERIFY(!result->hasPermission(QStringLiteral("network")));
     }
 };
 

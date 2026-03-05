@@ -46,4 +46,36 @@ TestCase {
         compare(STheme.body.pixelSize, 14)
         compare(STheme.caption.pixelSize, 12)
     }
+
+    function test_darkPropertyExists() {
+        verify(STheme.dark !== undefined)
+        STheme.dark = false
+        compare(STheme.dark, false)
+    }
+
+    function test_darkModeColors() {
+        STheme.dark = false
+        var lightBg = "" + STheme.background
+        var lightText = "" + STheme.text
+        var lightSurface = "" + STheme.surface
+
+        STheme.dark = true
+        verify("" + STheme.background !== lightBg)
+        verify("" + STheme.text !== lightText)
+        verify("" + STheme.surface !== lightSurface)
+
+        // Restore
+        STheme.dark = false
+    }
+
+    function test_primaryUnchangedByTheme() {
+        STheme.dark = false
+        var lightPrimary = "" + STheme.primary
+
+        STheme.dark = true
+        compare("" + STheme.primary, lightPrimary)
+
+        // Restore
+        STheme.dark = false
+    }
 }

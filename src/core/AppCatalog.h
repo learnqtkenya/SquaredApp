@@ -15,6 +15,7 @@ struct CatalogEntry {
     QUrl packageUrl;
     qint64 sizeBytes = 0;
     QString category;
+    QStringList permissions;
 };
 
 class AppCatalog : public QObject {

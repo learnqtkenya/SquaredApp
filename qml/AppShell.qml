@@ -48,7 +48,7 @@ Rectangle {
                 }
 
                 SText {
-                    text: shell.appDirName
+                    text: appRegistry ? appRegistry.appName(shell.appDirName) : shell.appDirName
                     variant: "subheading"
                     Layout.fillWidth: true
                     elide: Text.ElideRight

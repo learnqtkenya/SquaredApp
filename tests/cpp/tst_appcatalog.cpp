@@ -20,6 +20,7 @@ private:
         app1["packageUrl"] = "https://example.com/app1.sqapp";
         app1["sizeBytes"] = 12345;
         app1["category"] = "tools";
+        app1["permissions"] = QJsonArray{"network", "secure-storage"};
 
         QJsonObject app2;
         app2["id"] = "com.test.app2";
@@ -51,8 +52,13 @@ private slots:
         QCOMPARE(entries[0].category, "tools");
         QCOMPARE(entries[0].packageUrl.toString(), "https://example.com/app1.sqapp");
 
+        QCOMPARE(entries[0].permissions.size(), 2);
+        QVERIFY(entries[0].permissions.contains("network"));
+        QVERIFY(entries[0].permissions.contains("secure-storage"));
+
         QCOMPARE(entries[1].id, "com.test.app2");
         QCOMPARE(entries[1].name, "App Two");
+        QVERIFY(entries[1].permissions.isEmpty());
     }
 
     void parseEmptyAppsArray()

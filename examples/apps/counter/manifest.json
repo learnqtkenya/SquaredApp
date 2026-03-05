@@ -5,5 +5,6 @@
     "entry": "Main.qml",
     "icon": "assets/icon.png",
     "author": "Squared Computing",
-    "description": "A persistent counter app"
+    "description": "A persistent counter app",
+    "permissions": []
 }

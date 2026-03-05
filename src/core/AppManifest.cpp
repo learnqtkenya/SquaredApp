@@ -2,6 +2,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 
 std::optional<AppManifest> AppManifest::fromDirectory(const QString &dirPath)
@@ -39,5 +40,15 @@ std::optional<AppManifest> AppManifest::fromJson(const QJsonObject &json, const 
     m.author = json[u"author"].toString();
     m.description = json[u"description"].toString();
     m.basePath = basePath;
+
+    auto permsArray = json[u"permissions"].toArray();
+    for (const auto &p : permsArray)
+        m.permissions.append(p.toString());
+
     return m;
+}
+
+bool AppManifest::hasPermission(const QString &perm) const
+{
+    return permissions.contains(perm);
 }

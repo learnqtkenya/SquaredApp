@@ -62,6 +62,7 @@ public:
     void updateLaunchStats(const QString &appId);
 
     Q_INVOKABLE bool isInstalled(const QString &appId) const;
+    Q_INVOKABLE QString appName(const QString &dirName) const;
 
     InstalledAppsModel *model();
 

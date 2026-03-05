@@ -2,8 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 import Squared.UI
 
-Item {
+Rectangle {
     id: installedPage
+    color: STheme.background
 
     signal appLaunched(string appDir)
 
@@ -91,7 +92,7 @@ Item {
                     SText {
                         text: iconDelegate.appName
                         variant: "caption"
-                        color: "#FFFFFF"
+                        color: STheme.text
                         elide: Text.ElideRight
                         width: 72
                         anchors.horizontalCenter: parent.horizontalCenter

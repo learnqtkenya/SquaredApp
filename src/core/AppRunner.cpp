@@ -48,15 +48,24 @@ void AppRunner::launch(const AppManifest &manifest, QQuickItem *container)
     m_engine->addImportPath(m_addedImportPath);
 
     m_appContext = new QQmlContext(m_engine->rootContext());
-    m_storage = new AppStorage(manifest.id, m_storageRoot);
-    m_secureStorage = new SecureStorage(manifest.id, m_storageRoot, false, m_engine);
-    m_app = new SquaredApp(manifest.id, manifest.version);
-    m_network = new NetworkClient(manifest.id, m_engine);
 
+    // Storage and App are always available
+    m_storage = new AppStorage(manifest.id, m_storageRoot);
+    m_app = new SquaredApp(manifest.id, manifest.version);
     m_appContext->setContextProperty(QStringLiteral("Storage"), m_storage);
-    m_appContext->setContextProperty(QStringLiteral("SecureStorage"), m_secureStorage);
     m_appContext->setContextProperty(QStringLiteral("App"), m_app);
-    m_appContext->setContextProperty(QStringLiteral("Network"), m_network);
+
+    // Network requires "network" permission
+    if (manifest.hasPermission(QStringLiteral("network"))) {
+        m_network = new NetworkClient(manifest.id, m_engine);
+        m_appContext->setContextProperty(QStringLiteral("Network"), m_network);
+    }
+
+    // SecureStorage requires "secure-storage" permission
+    if (manifest.hasPermission(QStringLiteral("secure-storage"))) {
+        m_secureStorage = new SecureStorage(manifest.id, m_storageRoot, false, m_engine);
+        m_appContext->setContextProperty(QStringLiteral("SecureStorage"), m_secureStorage);
+    }
 
     auto entryPath = manifest.basePath + QStringLiteral("/qml/") + manifest.entry;
     QQmlComponent component(m_engine, QUrl::fromLocalFile(entryPath));
