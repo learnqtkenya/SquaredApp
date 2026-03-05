@@ -9,7 +9,7 @@ ApplicationWindow {
     width: 400
     height: 700
     title: " "
-    color: "transparent"
+    color: STheme.background
 
     Component.onCompleted: {
         if (themeManager)
@@ -87,7 +87,7 @@ ApplicationWindow {
                             anchors.centerIn: parent
                             icon: STheme.dark ? IconCodes.lightMode : IconCodes.darkMode
                             size: 22
-                            color: "#FFFFFF"
+                            color: STheme.text
                         }
 
                         MouseArea {
@@ -128,8 +128,9 @@ ApplicationWindow {
                 GridView {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    cellWidth: width / 4
-                    cellHeight: 88
+                    readonly property int columns: Math.max(4, Math.floor(width / 96))
+                    cellWidth: width / columns
+                    cellHeight: 96
                     clip: true
 
                     model: installedAppsModel
@@ -173,7 +174,7 @@ ApplicationWindow {
                             SText {
                                 text: iconDelegate.appName
                                 variant: "caption"
-                                color: "#FFFFFF"
+                                color: STheme.text
                                 elide: Text.ElideRight
                                 width: 72
                                 anchors.horizontalCenter: parent.horizontalCenter
