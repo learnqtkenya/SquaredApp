@@ -6,6 +6,7 @@ qt_add_library(SquaredCore STATIC
     PackageDownloader.h PackageDownloader.cpp
     AppRegistry.h AppRegistry.cpp
     ThemeManager.h ThemeManager.cpp
+    FileSystemWatcher.h FileSystemWatcher.cpp
 )
 
 target_link_libraries(SquaredCore PUBLIC Qt6::Quick Qt6::Qml Qt6::Network)

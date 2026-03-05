@@ -17,6 +17,21 @@ ApplicationWindow {
         appRunner.launchFromPath(devAppPath, appContainer)
     }
 
+    Connections {
+        target: appRunner
+        function onReloadRequested() {
+            reloadIndicator.show()
+            appRunner.launchFromPath(devAppPath, appContainer)
+        }
+        function onError(appId, message) {
+            errorText.text = message
+            errorText.visible = true
+        }
+        function onLaunched() {
+            errorText.visible = false
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -46,6 +61,28 @@ ApplicationWindow {
                     elide: Text.ElideMiddle
                     color: STheme.textSecondary
                 }
+
+                // Reload indicator
+                SText {
+                    id: reloadIndicator
+                    text: "reloaded"
+                    variant: "caption"
+                    color: STheme.success
+                    opacity: 0
+
+                    function show() {
+                        opacity = 1
+                        fadeOut.restart()
+                    }
+
+                    NumberAnimation on opacity {
+                        id: fadeOut
+                        running: false
+                        from: 1; to: 0
+                        duration: 1500
+                        easing.type: Easing.InQuad
+                    }
+                }
             }
 
             Rectangle {
@@ -61,6 +98,24 @@ ApplicationWindow {
             id: appContainer
             Layout.fillWidth: true
             Layout.fillHeight: true
+
+            // Error overlay
+            ScrollView {
+                anchors.fill: parent
+                visible: errorText.visible
+
+                SText {
+                    id: errorText
+                    visible: false
+                    width: appContainer.width - STheme.spacingMd * 2
+                    x: STheme.spacingMd
+                    y: STheme.spacingMd
+                    color: STheme.error
+                    variant: "caption"
+                    wrapMode: Text.Wrap
+                    font.family: "monospace"
+                }
+            }
         }
     }
 }

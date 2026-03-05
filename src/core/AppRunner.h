@@ -39,6 +39,7 @@ signals:
     void resumed();
     void closed();
     void error(const QString &appId, const QString &message);
+    void reloadRequested();
 
 private:
     void setState(State newState);

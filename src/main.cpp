@@ -1,41 +1,50 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QCommandLineParser>
 #include <QDir>
 #include <QFileInfo>
 #include <QFontDatabase>
 #include <QStandardPaths>
+#include <QTimer>
 #include <QUrl>
 #include <QtQml/qqml.h>
 #include "AppCatalog.h"
 #include "AppInstaller.h"
 #include "AppRegistry.h"
 #include "AppRunner.h"
+#include "FileSystemWatcher.h"
 #include "NetworkReply.h"
 #include "PackageDownloader.h"
 #include "SecureStorageReply.h"
 #include "ThemeManager.h"
-
-#ifndef EXAMPLES_PATH
-#define EXAMPLES_PATH ""
-#endif
+#include "config.h"
 
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     app.setOrganizationName(QStringLiteral("Squared"));
     app.setApplicationName(QStringLiteral("Squared"));
+    app.setApplicationVersion(QString::fromUtf8(config::project_version.data(),
+                                                config::project_version.size()));
 
-    // Check for --dev <path> flag
-    QString devAppPath;
-    auto args = app.arguments();
-    for (int i = 1; i < args.size(); ++i) {
-        if (args[i] == QStringLiteral("--dev") && i + 1 < args.size()) {
-            devAppPath = QFileInfo(args[i + 1]).absoluteFilePath();
-            break;
-        }
-    }
-    bool devMode = !devAppPath.isEmpty();
+    QCommandLineParser parser;
+    parser.setApplicationDescription(QStringLiteral("Squared \u2014 QML super app runtime"));
+    parser.addHelpOption();
+    parser.addVersionOption();
+
+    QCommandLineOption devOption(
+        QStringLiteral("dev"),
+        QStringLiteral("Launch a single app in dev mode with hot reload."),
+        QStringLiteral("path"));
+    parser.addOption(devOption);
+
+    parser.process(app);
+
+    bool devMode = parser.isSet(devOption);
+    auto devAppPath = devMode
+        ? QFileInfo(parser.value(devOption)).absoluteFilePath()
+        : QString();
 
     QFontDatabase::addApplicationFont(
         QStringLiteral(":/qt/qml/Squared/UI/fonts/Inter-Variable.ttf"));
@@ -60,7 +69,8 @@ int main(int argc, char *argv[])
     AppRunner runner(&engine, storageRoot);
     AppRegistry registry(registryPath);
     AppInstaller installer;
-    auto storeBaseUrl = QUrl(QStringLiteral("http://localhost:8080"));
+    auto storeBaseUrl = QUrl(qEnvironmentVariable(
+        "SQUARED_STORE_URL", QString::fromUtf8(config::store_url.data(), config::store_url.size())));
     PackageDownloader downloader(&installer, storeBaseUrl, storageRoot);
     auto catalogUrl = storeBaseUrl.resolved(QUrl(QStringLiteral("/api/catalog")));
     AppCatalog catalog(catalogUrl);
@@ -75,15 +85,33 @@ int main(int argc, char *argv[])
     ctx->setContextProperty(QStringLiteral("appCatalog"), &catalog);
     ctx->setContextProperty(QStringLiteral("installDir"), installDir);
     ctx->setContextProperty(QStringLiteral("examplesPath"),
-                            QStringLiteral(EXAMPLES_PATH));
+                            QString::fromUtf8(config::examples_path.data(), config::examples_path.size()));
 
     if (devMode) {
-        // Dev mode: launch a single app in a minimal window
         ctx->setContextProperty(QStringLiteral("devAppPath"), devAppPath);
+
+        FileSystemWatcher watcher;
+        watcher.addDirectory(devAppPath);
+
+        QTimer reloadTimer;
+        reloadTimer.setSingleShot(true);
+        reloadTimer.setInterval(200);
+
+        QObject::connect(&watcher, &FileSystemWatcher::fileChanged,
+                         &reloadTimer, qOverload<>(&QTimer::start));
+
+        QObject::connect(&reloadTimer, &QTimer::timeout, [&]() {
+            qInfo() << "File changed \u2014 reloading...";
+            runner.close();
+            engine.clearSingletons();
+            engine.clearComponentCache();
+            emit runner.reloadRequested();
+        });
+
         engine.loadFromModule("Squared.Host", "DevWindow");
     } else {
         // Seed registry with example apps (adds any missing examples)
-        auto exPath = QStringLiteral(EXAMPLES_PATH);
+        auto exPath = QString::fromUtf8(config::examples_path.data(), config::examples_path.size());
         if (!exPath.isEmpty()) {
             struct { const char *dir; const char *name; const char *icon;
                      const char *color; const char *id; } examples[] = {

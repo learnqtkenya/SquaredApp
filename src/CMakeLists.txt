@@ -29,6 +29,5 @@ target_link_libraries(Squared PRIVATE
     SquaredSDKplugin
 )
 
-target_compile_definitions(Squared PRIVATE
-    EXAMPLES_PATH="${CMAKE_SOURCE_DIR}/examples/apps"
-)
+target_include_directories(Squared PRIVATE ${CONFIG_INCLUDE_DIR})
+

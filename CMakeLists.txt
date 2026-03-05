@@ -21,6 +21,8 @@ set(BUILD_TEST_APPLICATION OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/qtkeychain)
 
+add_subdirectory(config)
+
 add_subdirectory(src/sdk/ui)
 add_subdirectory(src/sdk/storage)
 add_subdirectory(src/sdk/core)
