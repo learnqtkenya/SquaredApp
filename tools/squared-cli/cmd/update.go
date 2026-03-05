@@ -28,16 +28,16 @@ func RunUpdate(currentVersion string) error {
 
 	latest := ""
 	for _, r := range releases {
-		if strings.HasPrefix(r.TagName, "cli-v") {
+		if strings.HasPrefix(r.TagName, "v") {
 			latest = r.TagName
 			break
 		}
 	}
 	if latest == "" {
-		return fmt.Errorf("no CLI releases found")
+		return fmt.Errorf("no releases found")
 	}
 
-	latestVersion := strings.TrimPrefix(latest, "cli-")
+	latestVersion := latest
 	if latestVersion == currentVersion || "v"+currentVersion == latestVersion {
 		fmt.Printf("Already up to date (%s)\n", currentVersion)
 		return nil

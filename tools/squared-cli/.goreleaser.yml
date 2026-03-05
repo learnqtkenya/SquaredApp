@@ -2,9 +2,6 @@ version: 2
 
 project_name: squared
 
-monorepo:
-  tag_prefix: cli-v
-
 builds:
   - main: .
     binary: squared
@@ -21,11 +18,11 @@ builds:
       - -s -w -X main.version={{.Version}}
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     name_template: "squared_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
 
 checksum:
   name_template: "checksums.txt"
