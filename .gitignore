@@ -37,6 +37,9 @@ dist/
 .DS_Store
 Thumbs.db
 
+# Go
+tools/squared-cli/squared
+
 # Squared
 *.sqapp
 CLAUDE.md
