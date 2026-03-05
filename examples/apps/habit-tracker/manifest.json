@@ -1,0 +1,9 @@
+{
+    "id": "com.squared.habittracker",
+    "name": "Habit Tracker",
+    "version": "1.0.0",
+    "entry": "Main.qml",
+    "icon": "assets/icon.png",
+    "author": "Squared Computing",
+    "description": "Track daily habits and streaks"
+}

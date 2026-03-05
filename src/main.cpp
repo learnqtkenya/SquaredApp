@@ -71,6 +71,13 @@ int main(int argc, char *argv[])
                 { "todo", "Todo", "\ue614", "#FF9800", "com.squared.todo" },
                 { "finance", "Finance", "\ue850", "#22C55E", "com.squared.finance" },
                 { "weather", "Weather", "\ue430", "#42A5F5", "com.squared.weather" },
+                { "unit-converter", "Unit Converter", "\ue8d4", "#FF9800", "com.squared.unitconverter" },
+                { "habit-tracker", "Habit Tracker", "\ue6b1", "#9C27B0", "com.squared.habittracker" },
+                { "color-picker", "Color Picker", "\ue40a", "#E91E63", "com.squared.colorpicker" },
+                { "markdown-notes", "Markdown Notes", "\ue873", "#2196F3", "com.squared.markdownnotes" },
+                { "qml-playground", "QML Playground", "\ue86f", "#00BCD4", "com.squared.playground" },
+                { "pomodoro-timer", "Pomodoro Timer", "\ue425", "#4CAF50", "com.squared.pomodoro" },
+                { "iot-dashboard", "IoT Dashboard", "\ue871", "#607D8B", "com.squared.iotdashboard" },
             };
             for (const auto &ex : examples) {
                 auto id = QString::fromLatin1(ex.id);

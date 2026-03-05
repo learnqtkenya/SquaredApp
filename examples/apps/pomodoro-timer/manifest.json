@@ -1,0 +1,9 @@
+{
+    "id": "com.squared.pomodoro",
+    "name": "Pomodoro Timer",
+    "version": "1.0.0",
+    "entry": "Main.qml",
+    "icon": "assets/icon.png",
+    "author": "Squared Computing",
+    "description": "Focus timer with work and break intervals"
+}

@@ -1,0 +1,9 @@
+{
+    "id": "com.squared.playground",
+    "name": "QML Playground",
+    "version": "1.0.0",
+    "entry": "Main.qml",
+    "icon": "assets/icon.png",
+    "author": "Squared Computing",
+    "description": "Write and run QML code live"
+}

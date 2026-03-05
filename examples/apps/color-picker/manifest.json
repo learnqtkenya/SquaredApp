@@ -1,0 +1,9 @@
+{
+    "id": "com.squared.colorpicker",
+    "name": "Color Picker",
+    "version": "1.0.0",
+    "entry": "Main.qml",
+    "icon": "assets/icon.png",
+    "author": "Squared Computing",
+    "description": "Pick and save colors with RGB sliders"
+}

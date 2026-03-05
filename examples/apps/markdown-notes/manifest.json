@@ -1,0 +1,9 @@
+{
+    "id": "com.squared.markdownnotes",
+    "name": "Markdown Notes",
+    "version": "1.0.0",
+    "entry": "Main.qml",
+    "icon": "assets/icon.png",
+    "author": "Squared Computing",
+    "description": "Simple note-taking with Markdown"
+}

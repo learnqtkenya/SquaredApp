@@ -1,0 +1,9 @@
+{
+    "id": "com.squared.unitconverter",
+    "name": "Unit Converter",
+    "version": "1.0.0",
+    "entry": "Main.qml",
+    "icon": "assets/icon.png",
+    "author": "Squared Computing",
+    "description": "Convert between common units"
+}

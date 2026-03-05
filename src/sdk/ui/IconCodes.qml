@@ -28,6 +28,11 @@ QtObject {
     readonly property string upload: "\uf09b"
     readonly property string share: "\ue80d"
     readonly property string copy: "\ue14d"
+    readonly property string save: "\ue161"
+    readonly property string swapHoriz: "\ue8d4"
+    readonly property string swapVert: "\ue8d5"
+    readonly property string lock: "\ue897"
+    readonly property string lockOpen: "\ue898"
 
     // Content
     readonly property string star: "\uf09a"
@@ -47,11 +52,18 @@ QtObject {
     readonly property string playArrow: "\ue037"
     readonly property string pause: "\ue034"
     readonly property string stop: "\ue047"
+    readonly property string skipNext: "\ue044"
     readonly property string image: "\ue3f4"
 
     // Device
     readonly property string timer: "\ue425"
     readonly property string storage: "\ue1db"
+    readonly property string thermostat: "\uf076"
+    readonly property string battery: "\ue1a4"
+    readonly property string sensors: "\ue51e"
+    readonly property string lightMode: "\ue518"
+    readonly property string speed: "\ue9e4"
+    readonly property string waterDrop: "\ue798"
 
     // Social
     readonly property string person: "\uf0d3"
@@ -73,4 +85,7 @@ QtObject {
     readonly property string empty: "\uf09a"
     readonly property string apps: "\ue5c3"
     readonly property string store: "\ue8d1"
+    readonly property string checklist: "\ue6b1"
+    readonly property string description: "\ue873"
+    readonly property string rocketLaunch: "\ueb9b"
 }
