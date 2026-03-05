@@ -8,13 +8,30 @@ A Qt6/QML super app platform. Build QML apps, package them as `.sqapp` bundles, 
 - CMake 3.21+, Ninja
 - C++20 compiler (GCC 11+, Clang 14+)
 - Go 1.25+ (for the developer CLI)
+- Android SDK, NDK r27+, JDK 17+ (for Android builds)
 
 ## Build
+
+### Desktop (Linux)
 
 ```bash
 cmake -G Ninja -B build -DCMAKE_PREFIX_PATH=/opt/Qt/6.10.2/gcc_64
 cmake --build build
 ```
+
+### Android (arm64)
+
+```bash
+cmake -G Ninja -B build-android \
+  -DCMAKE_PREFIX_PATH=/opt/Qt/6.10.2/android_arm64_v8a \
+  -DCMAKE_TOOLCHAIN_FILE=/opt/Qt/6.10.2/android_arm64_v8a/lib/cmake/Qt6/qt.toolchain.cmake \
+  -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \
+  -DANDROID_NDK_ROOT=$ANDROID_NDK_ROOT \
+  -DQT_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake
+cmake --build build-android
+```
+
+Requires Android SDK, NDK r27+, and JDK 17+. Set `ANDROID_SDK_ROOT`, `ANDROID_NDK_ROOT`, and `JAVA_HOME` environment variables.
 
 ## Test
 
