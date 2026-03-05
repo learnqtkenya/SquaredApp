@@ -14,6 +14,8 @@ ApplicationWindow {
     Component.onCompleted: {
         if (themeManager)
             STheme.dark = themeManager.dark
+        SSize.windowWidth = Qt.binding(() => window.width)
+        SSize.windowHeight = Qt.binding(() => window.height)
     }
 
     StackView {
@@ -128,8 +130,7 @@ ApplicationWindow {
                 GridView {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    readonly property int columns: Math.max(4, Math.floor(width / 96))
-                    cellWidth: width / columns
+                    cellWidth: width / SSize.gridColumns
                     cellHeight: 96
                     clip: true
 

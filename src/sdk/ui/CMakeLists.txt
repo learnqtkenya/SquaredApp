@@ -39,11 +39,13 @@ qt_add_qml_module(SquaredUI
 
 set_source_files_properties(STheme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(IconCodes.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(SSize.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 qt_target_qml_sources(SquaredUI
     QML_FILES
         STheme.qml
         IconCodes.qml
+        SSize.qml
         ComponentGallery.qml
 )
 

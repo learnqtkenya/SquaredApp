@@ -77,13 +77,14 @@ Rectangle {
             onTextChanged: storePage.searchText = text
         }
 
-        // Category pills
-        ScrollView {
+        // Category pills (horizontally scrollable)
+        Flickable {
             Layout.fillWidth: true
             Layout.preferredHeight: 36
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-            ScrollBar.vertical.policy: ScrollBar.AlwaysOff
-            contentWidth: categoryRow.width
+            contentWidth: categoryRow.implicitWidth
+            contentHeight: 36
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
             clip: true
 
             RowLayout {
@@ -183,7 +184,8 @@ Rectangle {
             Layout.fillHeight: true
             clip: true
 
-            cellWidth: width / 2
+            readonly property int cols: Math.max(2, Math.floor(width / 280))
+            cellWidth: width / cols
             cellHeight: 180
 
             model: storePage.filteredEntries()
