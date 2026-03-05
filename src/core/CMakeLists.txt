@@ -5,7 +5,6 @@ qt_add_library(SquaredCore STATIC
     AppCatalog.h AppCatalog.cpp
     PackageDownloader.h PackageDownloader.cpp
     AppRegistry.h AppRegistry.cpp
-    ThemeManager.h ThemeManager.cpp
     FileSystemWatcher.h FileSystemWatcher.cpp
 )
 

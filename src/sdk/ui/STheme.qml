@@ -1,8 +1,15 @@
 pragma Singleton
 import QtQuick
+import QtCore
 
 QtObject {
+    id: root
     property bool dark: false
+
+    property Settings _settings: Settings {
+        category: "theme"
+        property alias dark: root.dark
+    }
 
     // Colors — dynamic based on dark mode
     readonly property color primary: "#6366F1"

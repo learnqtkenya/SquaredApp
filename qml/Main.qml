@@ -12,8 +12,6 @@ ApplicationWindow {
     color: STheme.background
 
     Component.onCompleted: {
-        if (themeManager)
-            STheme.dark = themeManager.dark
         SSize.windowWidth = Qt.binding(() => window.width)
         SSize.windowHeight = Qt.binding(() => window.height)
     }
@@ -96,11 +94,7 @@ ApplicationWindow {
                             id: mouseTheme
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                STheme.dark = !STheme.dark
-                                if (themeManager)
-                                    themeManager.dark = STheme.dark
-                            }
+                            onClicked: STheme.dark = !STheme.dark
                         }
                     }
 

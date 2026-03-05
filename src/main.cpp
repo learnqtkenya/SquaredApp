@@ -17,7 +17,6 @@
 #include "NetworkReply.h"
 #include "PackageDownloader.h"
 #include "SecureStorageReply.h"
-#include "ThemeManager.h"
 #include "config.h"
 
 int main(int argc, char *argv[])
@@ -65,7 +64,6 @@ int main(int argc, char *argv[])
 
     QDir().mkpath(installDir);
 
-    ThemeManager themeManager;
     AppRunner runner(&engine, storageRoot);
     AppRegistry registry(registryPath);
     AppInstaller installer;
@@ -76,7 +74,6 @@ int main(int argc, char *argv[])
     AppCatalog catalog(catalogUrl);
 
     auto *ctx = engine.rootContext();
-    ctx->setContextProperty(QStringLiteral("themeManager"), &themeManager);
     ctx->setContextProperty(QStringLiteral("appRunner"), &runner);
     ctx->setContextProperty(QStringLiteral("appRegistry"), &registry);
     ctx->setContextProperty(QStringLiteral("installedAppsModel"), registry.model());
