@@ -84,13 +84,14 @@ int main(int argc, char *argv[])
     ctx->setContextProperty(QStringLiteral("examplesPath"),
                             QString::fromUtf8(config::examples_path.data(), config::examples_path.size()));
 
+    // Hot reload objects — must outlive the if/else block to survive into app.exec()
+    FileSystemWatcher watcher;
+    QTimer reloadTimer;
+
     if (devMode) {
         ctx->setContextProperty(QStringLiteral("devAppPath"), devAppPath);
 
-        FileSystemWatcher watcher;
         watcher.addDirectory(devAppPath);
-
-        QTimer reloadTimer;
         reloadTimer.setSingleShot(true);
         reloadTimer.setInterval(200);
 
@@ -98,9 +99,8 @@ int main(int argc, char *argv[])
                          &reloadTimer, qOverload<>(&QTimer::start));
 
         QObject::connect(&reloadTimer, &QTimer::timeout, [&]() {
-            qInfo() << "File changed \u2014 reloading...";
+            qInfo() << "File changed — reloading...";
             runner.close();
-            engine.clearSingletons();
             engine.clearComponentCache();
             emit runner.reloadRequested();
         });
