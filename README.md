@@ -51,13 +51,37 @@ QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure
 
 The `squared` CLI scaffolds, validates, packages, and publishes apps.
 
-```bash
-cd tools/squared-cli && go build -o squared .
+### Install
 
+**Linux / macOS:**
+
+```bash
+curl -fsSL https://squared.co.ke/install.sh | sh
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://squared.co.ke/install.ps1 | iex
+```
+
+Downloads the latest binary for your platform. Installs to `~/.local/bin` (Linux/macOS) or `%LOCALAPPDATA%\Squared\bin` (Windows).
+
+### Usage
+
+```bash
 squared init my-app           # Scaffold a new app project
 squared validate my-app       # Check manifest and file structure
 squared package my-app        # Create .sqapp bundle
 squared publish app.sqapp     # Publish metadata to store server
+squared update                # Update to latest version
+squared version               # Print installed version
+```
+
+### Build from source
+
+```bash
+cd tools/squared-cli && go build -o squared .
 ```
 
 ## Store Server

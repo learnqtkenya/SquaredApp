@@ -9,6 +9,8 @@ import (
 	"squared-cli/cmd"
 )
 
+var version = "dev"
+
 const usage = `squared — Squared app developer CLI
 
 Usage:
@@ -17,6 +19,8 @@ Usage:
   squared package [path] [--output <file>]
   squared publish <sqapp> [--server <url>] [--token <token>] [--package-url <url>]
   squared run [path]
+  squared update
+  squared version
   squared help
 `
 
@@ -39,6 +43,11 @@ func main() {
 		err = runPublish(os.Args[2:])
 	case "run":
 		runRun()
+	case "update":
+		err = cmd.RunUpdate(version)
+	case "version", "--version", "-v":
+		fmt.Printf("squared %s\n", version)
+		os.Exit(0)
 	case "help", "--help", "-h":
 		fmt.Print(usage)
 		os.Exit(0)
