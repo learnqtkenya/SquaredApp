@@ -25,7 +25,7 @@ func NewPostgresStore(pool *pgxpool.Pool, secretsKey []byte) *PostgresStore {
 func (s *PostgresStore) List(ctx context.Context) ([]model.App, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, name, version, author, description, icon_url, package_url,
-		       size_bytes, category, created_at, updated_at
+		       size_bytes, category, icon, color, created_at, updated_at
 		FROM apps ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("list apps: %w", err)
@@ -37,6 +37,7 @@ func (s *PostgresStore) List(ctx context.Context) ([]model.App, error) {
 		var a model.App
 		if err := rows.Scan(&a.ID, &a.Name, &a.Version, &a.Author, &a.Description,
 			&a.IconURL, &a.PackageURL, &a.SizeBytes, &a.Category,
+			&a.Icon, &a.Color,
 			&a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan app: %w", err)
 		}
@@ -52,10 +53,11 @@ func (s *PostgresStore) GetByID(ctx context.Context, id string) (model.App, erro
 	var a model.App
 	err := s.pool.QueryRow(ctx, `
 		SELECT id, name, version, author, description, icon_url, package_url,
-		       size_bytes, category, created_at, updated_at
+		       size_bytes, category, icon, color, created_at, updated_at
 		FROM apps WHERE id = $1`, id).Scan(
 		&a.ID, &a.Name, &a.Version, &a.Author, &a.Description,
 		&a.IconURL, &a.PackageURL, &a.SizeBytes, &a.Category,
+		&a.Icon, &a.Color,
 		&a.CreatedAt, &a.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return a, fmt.Errorf("app %s: %w", id, ErrNotFound)
@@ -69,14 +71,16 @@ func (s *PostgresStore) GetByID(ctx context.Context, id string) (model.App, erro
 func (s *PostgresStore) Create(ctx context.Context, app model.App) (model.App, error) {
 	var a model.App
 	err := s.pool.QueryRow(ctx, `
-		INSERT INTO apps (id, name, version, author, description, icon_url, package_url, size_bytes, category)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO apps (id, name, version, author, description, icon_url, package_url, size_bytes, category, icon, color)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id, name, version, author, description, icon_url, package_url,
-		          size_bytes, category, created_at, updated_at`,
+		          size_bytes, category, icon, color, created_at, updated_at`,
 		app.ID, app.Name, app.Version, app.Author, app.Description,
-		app.IconURL, app.PackageURL, app.SizeBytes, app.Category).Scan(
+		app.IconURL, app.PackageURL, app.SizeBytes, app.Category,
+		app.Icon, app.Color).Scan(
 		&a.ID, &a.Name, &a.Version, &a.Author, &a.Description,
 		&a.IconURL, &a.PackageURL, &a.SizeBytes, &a.Category,
+		&a.Icon, &a.Color,
 		&a.CreatedAt, &a.UpdatedAt)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -92,14 +96,17 @@ func (s *PostgresStore) Update(ctx context.Context, id string, app model.App) (m
 	var a model.App
 	err := s.pool.QueryRow(ctx, `
 		UPDATE apps SET name=$2, version=$3, author=$4, description=$5,
-		       icon_url=$6, package_url=$7, size_bytes=$8, category=$9, updated_at=now()
+		       icon_url=$6, package_url=$7, size_bytes=$8, category=$9,
+		       icon=$10, color=$11, updated_at=now()
 		WHERE id=$1
 		RETURNING id, name, version, author, description, icon_url, package_url,
-		          size_bytes, category, created_at, updated_at`,
+		          size_bytes, category, icon, color, created_at, updated_at`,
 		id, app.Name, app.Version, app.Author, app.Description,
-		app.IconURL, app.PackageURL, app.SizeBytes, app.Category).Scan(
+		app.IconURL, app.PackageURL, app.SizeBytes, app.Category,
+		app.Icon, app.Color).Scan(
 		&a.ID, &a.Name, &a.Version, &a.Author, &a.Description,
 		&a.IconURL, &a.PackageURL, &a.SizeBytes, &a.Category,
+		&a.Icon, &a.Color,
 		&a.CreatedAt, &a.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return a, fmt.Errorf("app %s: %w", id, ErrNotFound)
@@ -126,7 +133,8 @@ func (s *PostgresStore) CatalogHash(ctx context.Context) (string, error) {
 	err := s.pool.QueryRow(ctx, `
 		SELECT md5(COALESCE(string_agg(
 			id || name || version || author || description ||
-			icon_url || package_url || size_bytes::text || category,
+			icon_url || package_url || size_bytes::text || category ||
+			icon || color,
 			'|' ORDER BY id
 		), ''))
 		FROM apps`).Scan(&hash)

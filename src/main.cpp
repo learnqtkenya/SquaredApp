@@ -13,6 +13,7 @@
 #include <QtQml/qqml.h>
 #include "AppCatalog.h"
 #include "AppInstaller.h"
+#include "AppManifest.h"
 #include "AppRegistry.h"
 #include "AppRunner.h"
 #include "FileSystemWatcher.h"
@@ -77,8 +78,43 @@ int main(int argc, char *argv[])
     auto storeBaseUrl = QUrl(qEnvironmentVariable(
         "SQUARED_STORE_URL", QString::fromUtf8(config::store_url.data(), config::store_url.size())));
     PackageDownloader downloader(&installer, storeBaseUrl, storageRoot);
-    auto catalogUrl = storeBaseUrl.resolved(QUrl(QStringLiteral("/api/catalog")));
+    auto storeUrlStr = storeBaseUrl.toString();
+    if (!storeUrlStr.endsWith(QLatin1Char('/')))
+        storeUrlStr.append(QLatin1Char('/'));
+    auto catalogUrl = QUrl(storeUrlStr + QStringLiteral("api/catalog"));
     AppCatalog catalog(catalogUrl);
+
+    // Register downloaded app in registry after successful install
+    // Uses catalog metadata for icon/color when available
+    QObject::connect(&downloader, &PackageDownloader::installed,
+                     [&registry, &catalog, &installDir](const QString &appId) {
+        auto manifest = AppManifest::fromDirectory(installDir + QStringLiteral("/") + appId);
+        if (!manifest) return;
+        AppEntry entry;
+        entry.id = manifest->id;
+        entry.name = manifest->name;
+        entry.version = manifest->version;
+        entry.author = manifest->author;
+        entry.description = manifest->description;
+        entry.dirName = appId;
+        entry.icon = QStringLiteral("\ue5c3");
+        entry.color = QStringLiteral("#2196F3");
+
+        // Try to get icon/color from catalog
+        for (const auto &ce : catalog.entries()) {
+            auto map = ce.toMap();
+            if (map.value(QStringLiteral("id")).toString() == appId) {
+                auto icon = map.value(QStringLiteral("icon")).toString();
+                auto color = map.value(QStringLiteral("color")).toString();
+                if (!icon.isEmpty()) entry.icon = icon;
+                if (!color.isEmpty()) entry.color = color;
+                break;
+            }
+        }
+
+        entry.installDate = QDateTime::currentDateTime();
+        registry.addApp(entry);
+    });
 
     auto *ctx = engine.rootContext();
     ctx->setContextProperty(QStringLiteral("appRunner"), &runner);
@@ -88,6 +124,7 @@ int main(int argc, char *argv[])
     ctx->setContextProperty(QStringLiteral("packageDownloader"), &downloader);
     ctx->setContextProperty(QStringLiteral("appCatalog"), &catalog);
     ctx->setContextProperty(QStringLiteral("installDir"), installDir);
+    ctx->setContextProperty(QStringLiteral("storageRoot"), storageRoot);
     // Resolve examples path: prefer compile-time path (dev builds), fall back
     // to installed location relative to executable (AppImage, packages, etc.)
     auto configExamplesPath = QString::fromUtf8(config::examples_path.data(), config::examples_path.size());
@@ -126,39 +163,6 @@ int main(int argc, char *argv[])
 
         engine.loadFromModule("Squared.Host", "DevWindow");
     } else {
-        // Seed registry with example apps (adds any missing examples)
-        if (!examplesPathResolved.isEmpty()) {
-            struct { const char *dir; const char *name; const char *icon;
-                     const char *color; const char *id; } examples[] = {
-                { "hello-world", "Hello World", "\ue9b2", "#2196F3", "com.squared.helloworld" },
-                { "counter", "Counter", "\ue145", "#9C27B0", "com.squared.counter" },
-                { "todo", "Todo", "\ue614", "#FF9800", "com.squared.todo" },
-                { "finance", "Finance", "\ue850", "#22C55E", "com.squared.finance" },
-                { "weather", "Weather", "\ue430", "#42A5F5", "com.squared.weather" },
-                { "unit-converter", "Unit Converter", "\ue8d4", "#FF9800", "com.squared.unitconverter" },
-                { "habit-tracker", "Habit Tracker", "\ue6b1", "#9C27B0", "com.squared.habittracker" },
-                { "color-picker", "Color Picker", "\ue40a", "#E91E63", "com.squared.colorpicker" },
-                { "markdown-notes", "Markdown Notes", "\ue873", "#2196F3", "com.squared.markdownnotes" },
-                { "qml-playground", "QML Playground", "\ue86f", "#00BCD4", "com.squared.playground" },
-                { "pomodoro-timer", "Pomodoro Timer", "\ue425", "#4CAF50", "com.squared.pomodoro" },
-                { "iot-dashboard", "IoT Dashboard", "\ue871", "#607D8B", "com.squared.iotdashboard" },
-            };
-            for (const auto &ex : examples) {
-                auto id = QString::fromLatin1(ex.id);
-                if (registry.findApp(id))
-                    continue;
-                AppEntry entry;
-                entry.id = id;
-                entry.name = QString::fromLatin1(ex.name);
-                entry.version = QStringLiteral("1.0.0");
-                entry.icon = QString::fromUtf8(ex.icon);
-                entry.color = QString::fromLatin1(ex.color);
-                entry.dirName = QString::fromLatin1(ex.dir);
-                entry.installDate = QDateTime::currentDateTime();
-                registry.addApp(entry);
-            }
-        }
-
         engine.loadFromModule("Squared.Host", "Main");
     }
 

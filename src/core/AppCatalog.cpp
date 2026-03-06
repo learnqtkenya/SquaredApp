@@ -37,6 +37,8 @@ QVariantList AppCatalog::entries() const
         map[QStringLiteral("packageUrl")] = e.packageUrl;
         map[QStringLiteral("sizeBytes")] = e.sizeBytes;
         map[QStringLiteral("category")] = e.category;
+        map[QStringLiteral("icon")] = e.icon;
+        map[QStringLiteral("color")] = e.color;
         map[QStringLiteral("permissions")] = QVariant::fromValue(e.permissions);
         list.append(map);
     }
@@ -151,6 +153,8 @@ QList<CatalogEntry> AppCatalog::parseJson(const QByteArray &data)
         entry.packageUrl = QUrl(obj.value(QStringLiteral("packageUrl")).toString());
         entry.sizeBytes = obj.value(QStringLiteral("sizeBytes")).toInteger();
         entry.category = obj.value(QStringLiteral("category")).toString();
+        entry.icon = obj.value(QStringLiteral("icon")).toString();
+        entry.color = obj.value(QStringLiteral("color")).toString();
 
         auto permsArr = obj.value(QStringLiteral("permissions")).toArray();
         for (const auto &p : permsArr)

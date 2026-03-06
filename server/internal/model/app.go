@@ -16,6 +16,8 @@ type App struct {
 	PackageURL  string    `json:"packageUrl"`
 	SizeBytes   int64     `json:"sizeBytes"`
 	Category    string    `json:"category"`
+	Icon        string    `json:"icon"`
+	Color       string    `json:"color"`
 	CreatedAt   time.Time `json:"-"`
 	UpdatedAt   time.Time `json:"-"`
 }

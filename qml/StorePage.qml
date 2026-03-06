@@ -12,6 +12,9 @@ Rectangle {
     property var _stack: null
     property string searchText: ""
     property string selectedCategory: "All"
+    property var downloadingApps: ({})
+    property string uninstallTargetId: ""
+    property string uninstallTargetName: ""
     readonly property var categories: ["All", "Productivity", "Utility", "Developer", "Finance", "IoT"]
 
     function filteredEntries() {
@@ -25,20 +28,60 @@ Rectangle {
         })
     }
 
+    function requestUninstall(appId, appName) {
+        storePage.uninstallTargetId = appId
+        storePage.uninstallTargetName = appName
+        uninstallDialog.open()
+    }
+
+    function performUninstall() {
+        var appId = storePage.uninstallTargetId
+        if (appId === "") return
+        if (appInstaller) appInstaller.uninstall(appId, installDir, storageRoot)
+        if (appRegistry) appRegistry.removeApp(appId)
+        catalogList.model = storePage.filteredEntries()
+        storePage.uninstallTargetId = ""
+        storePage.uninstallTargetName = ""
+    }
+
+    Connections {
+        target: packageDownloader
+        function onInstalled(appId) {
+            var d = storePage.downloadingApps
+            delete d[appId]
+            storePage.downloadingApps = d
+            catalogList.model = storePage.filteredEntries()
+        }
+        function onError(appId, message) {
+            var d = storePage.downloadingApps
+            delete d[appId]
+            storePage.downloadingApps = d
+            console.warn("Install failed for", appId, ":", message)
+        }
+    }
+
     Component.onCompleted: {
         _stack = storePage.StackView.view
         if (appCatalog)
             appCatalog.fetch()
     }
 
+    SDialog {
+        id: uninstallDialog
+        title: "Uninstall " + storePage.uninstallTargetName + "?"
+        onAccepted: storePage.performUninstall()
+    }
+
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: STheme.spacingMd
-        spacing: STheme.spacingSm
+        spacing: 0
 
-        // Header with back button
+        // Header
         RowLayout {
             Layout.fillWidth: true
+            Layout.leftMargin: STheme.spacingSm
+            Layout.rightMargin: STheme.spacingMd
+            Layout.topMargin: STheme.spacingSm
             spacing: STheme.spacingSm
 
             Rectangle {
@@ -70,37 +113,42 @@ Rectangle {
             }
         }
 
-        // Search field
+        // Search
         SSearchField {
             Layout.fillWidth: true
+            Layout.leftMargin: STheme.spacingMd
+            Layout.rightMargin: STheme.spacingMd
+            Layout.topMargin: STheme.spacingSm
             placeholderText: "Search store..."
             onTextChanged: storePage.searchText = text
         }
 
-        // Category pills (horizontally scrollable)
+        // Category pills
         Flickable {
             Layout.fillWidth: true
-            Layout.preferredHeight: 36
+            Layout.preferredHeight: 40
+            Layout.leftMargin: STheme.spacingMd
+            Layout.topMargin: STheme.spacingSm
             contentWidth: categoryRow.implicitWidth
-            contentHeight: 36
+            contentHeight: 28
             flickableDirection: Flickable.HorizontalFlick
             boundsBehavior: Flickable.StopAtBounds
             clip: true
 
-            RowLayout {
+            Row {
                 id: categoryRow
-                spacing: STheme.spacingSm
+                spacing: STheme.spacingXs
 
                 Repeater {
                     model: storePage.categories
 
                     Rectangle {
                         required property string modelData
-                        Layout.preferredHeight: 32
-                        Layout.preferredWidth: pillText.implicitWidth + STheme.spacingMd * 2
-                        radius: STheme.radiusLarge
+                        width: pillText.implicitWidth + STheme.spacingMd * 2
+                        height: 28
+                        radius: 14
                         color: storePage.selectedCategory === modelData
-                               ? STheme.primary : STheme.surfaceVariant
+                               ? STheme.primary : "transparent"
                         border.width: 1
                         border.color: storePage.selectedCategory === modelData
                                       ? STheme.primary : STheme.border
@@ -111,7 +159,7 @@ Rectangle {
                             text: modelData
                             variant: "caption"
                             color: storePage.selectedCategory === modelData
-                                   ? "#FFFFFF" : STheme.text
+                                   ? "#FFFFFF" : STheme.textSecondary
                         }
 
                         MouseArea {
@@ -124,7 +172,15 @@ Rectangle {
             }
         }
 
-        // Loading state
+        // Separator
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.topMargin: STheme.spacingSm
+            implicitHeight: 1
+            color: STheme.border
+        }
+
+        // Loading
         ColumnLayout {
             visible: appCatalog ? appCatalog.loading : false
             Layout.fillWidth: true
@@ -149,7 +205,7 @@ Rectangle {
             Item { Layout.fillHeight: true }
         }
 
-        // Error state
+        // Error
         SEmptyState {
             visible: appCatalog ? (appCatalog.errorMessage !== "" && !appCatalog.loading) : false
             Layout.fillWidth: true
@@ -164,7 +220,7 @@ Rectangle {
             }
         }
 
-        // Empty state (no error, not loading, but no entries)
+        // Empty
         SEmptyState {
             visible: appCatalog ? (appCatalog.entries.length === 0
                      && appCatalog.errorMessage === ""
@@ -176,134 +232,153 @@ Rectangle {
             icon: IconCodes.apps
         }
 
-        // Catalog grid
-        GridView {
-            id: catalogGrid
+        // Compact list
+        ListView {
+            id: catalogList
             visible: appCatalog ? (appCatalog.entries.length > 0 && !appCatalog.loading) : false
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
 
-            readonly property int cols: Math.max(2, Math.floor(width / 280))
-            cellWidth: width / cols
-            cellHeight: 180
-
             model: storePage.filteredEntries()
 
             delegate: Item {
-                id: gridDelegate
+                id: listDelegate
                 required property var modelData
 
-                width: catalogGrid.cellWidth
-                height: catalogGrid.cellHeight
+                width: ListView.view.width
+                height: 60
 
-                Item {
+                readonly property bool isInstalled: appRegistry && appRegistry.isInstalled(listDelegate.modelData.id)
+                readonly property bool isDownloading: !!storePage.downloadingApps[listDelegate.modelData.id]
+                readonly property string appColor: (listDelegate.modelData.color || "") !== "" ? listDelegate.modelData.color : STheme.primary
+                readonly property string appIcon: (listDelegate.modelData.icon || "") !== "" ? listDelegate.modelData.icon : IconCodes.apps
+
+                function startInstall() {
+                    var d = storePage.downloadingApps
+                    d[listDelegate.modelData.id] = true
+                    storePage.downloadingApps = d
+                    storePage.installRequested(listDelegate.modelData.id, listDelegate.modelData.packageUrl)
+                }
+
+                function startUninstall() {
+                    storePage.requestUninstall(
+                        listDelegate.modelData.id,
+                        listDelegate.modelData.name || listDelegate.modelData.id)
+                }
+
+                // Row-level tap target (behind everything)
+                MouseArea {
+                    id: rowMouse
                     anchors.fill: parent
-                    anchors.margins: STheme.spacingXs
-
-                    SCard {
-                        anchors.fill: parent
-
-                        // Icon + badge row
-                        RowLayout {
-                            Layout.fillWidth: true
-
-                            Item {
-                                Layout.preferredWidth: 40
-                                Layout.preferredHeight: 40
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: STheme.radiusMedium
-                                    color: STheme.primary
-                                    opacity: 0.12
-                                }
-
-                                SIcon {
-                                    anchors.centerIn: parent
-                                    icon: IconCodes.apps
-                                    size: 24
-                                    color: STheme.primary
-                                }
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Loader {
-                                sourceComponent: (appRegistry && appRegistry.isInstalled(gridDelegate.modelData.id))
-                                                 ? installedBadge : installButton
-                            }
-                        }
-
-                        // App name
-                        SText {
-                            text: gridDelegate.modelData.name || ""
-                            variant: "body"
-                            font.weight: Font.DemiBold
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
-                        }
-
-                        // Author
-                        SText {
-                            text: gridDelegate.modelData.author || ""
-                            variant: "caption"
-                            color: STheme.textSecondary
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
-                        }
-
-                        // Description
-                        SText {
-                            visible: (gridDelegate.modelData.description || "") !== ""
-                            text: gridDelegate.modelData.description || ""
-                            variant: "caption"
-                            color: STheme.textSecondary
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
-                            maximumLineCount: 2
-                            wrapMode: Text.WordWrap
-                        }
-
-                        // Permission badges
-                        Flow {
-                            visible: (gridDelegate.modelData.permissions || []).length > 0
-                            Layout.fillWidth: true
-                            spacing: STheme.spacingXs
-
-                            Repeater {
-                                model: gridDelegate.modelData.permissions || []
-                                SBadge {
-                                    required property string modelData
-                                    text: modelData
-                                    badgeColor: STheme.primaryVariant
-                                    textColor: "#FFFFFF"
-                                }
-                            }
-                        }
+                    cursorShape: listDelegate.isInstalled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: {
+                        if (listDelegate.isInstalled)
+                            listDelegate.startUninstall()
                     }
                 }
-            }
-        }
-    }
 
-    Component {
-        id: installedBadge
-        SBadge {
-            text: "Installed"
-            badgeColor: STheme.surfaceVariant
-            textColor: STheme.textSecondary
-        }
-    }
+                Rectangle {
+                    anchors.fill: parent
+                    color: rowMouse.pressed ? STheme.surfaceVariant : "transparent"
+                }
 
-    Component {
-        id: installButton
-        SButton {
-            text: "Get"
-            style: "Secondary"
-            onClicked: {
-                var entry = parent.parent.parent.parent.parent.modelData
-                storePage.installRequested(entry.id, entry.packageUrl)
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: STheme.spacingMd
+                    anchors.rightMargin: STheme.spacingMd
+                    spacing: STheme.spacingSm
+
+                    // App icon
+                    Item {
+                        Layout.preferredWidth: 40
+                        Layout.preferredHeight: 40
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: STheme.radiusMedium
+                            color: listDelegate.appColor
+                            opacity: 0.12
+                        }
+
+                        SIcon {
+                            anchors.centerIn: parent
+                            icon: listDelegate.appIcon
+                            size: 22
+                            color: listDelegate.appColor
+                        }
+                    }
+
+                    // Name + description
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        SText {
+                            text: listDelegate.modelData.name || ""
+                            variant: "body"
+                            font.weight: Font.DemiBold
+                            color: STheme.text
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+
+                        SText {
+                            text: listDelegate.modelData.description || listDelegate.modelData.author || ""
+                            variant: "caption"
+                            color: STheme.textSecondary
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    // Action: Get / Installing / Installed
+                    Rectangle {
+                        visible: !listDelegate.isInstalled && !listDelegate.isDownloading
+                        Layout.preferredWidth: getLabel.implicitWidth + 24
+                        Layout.preferredHeight: 28
+                        radius: 14
+                        color: STheme.primary
+
+                        SText {
+                            id: getLabel
+                            anchors.centerIn: parent
+                            text: "Get"
+                            variant: "caption"
+                            font.weight: Font.DemiBold
+                            color: "#FFFFFF"
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: listDelegate.startInstall()
+                        }
+                    }
+
+                    SLoadingSpinner {
+                        visible: listDelegate.isDownloading
+                        size: 22
+                    }
+
+                    SIcon {
+                        visible: listDelegate.isInstalled && !listDelegate.isDownloading
+                        icon: IconCodes.checkCircle
+                        size: 22
+                        color: STheme.textSecondary
+                    }
+                }
+
+                // Bottom separator (indented past icon)
+                Rectangle {
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.leftMargin: STheme.spacingMd + 40 + STheme.spacingSm
+                    height: 1
+                    color: STheme.border
+                    opacity: 0.5
+                }
             }
         }
     }

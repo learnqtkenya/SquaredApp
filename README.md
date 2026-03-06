@@ -1,6 +1,15 @@
-# Squared
+<p align="center">
+  <img src="assets/icons/squared-192.png" width="128" height="128" alt="Squared icon">
+</p>
 
-A Qt6/QML super app platform. Build QML apps, package them as `.sqapp` bundles, publish to the Squared Store, and run them inside the Squared host app.
+<h1 align="center">Squared</h1>
+
+<p align="center">
+  A Qt6/QML super app platform. Build QML apps, package them as <code>.sqapp</code> bundles, publish to the Squared Store, and run them inside the Squared host app.
+</p>
+
+> [!WARNING]
+> Squared is a learning/toy project built to explore the super app pattern with Qt. It is not intended for production use.
 
 ## Platforms
 

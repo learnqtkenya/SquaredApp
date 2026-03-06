@@ -56,7 +56,7 @@ public:
     explicit AppRegistry(const QString &registryPath, QObject *parent = nullptr);
 
     void addApp(const AppEntry &entry);
-    void removeApp(const QString &appId);
+    Q_INVOKABLE void removeApp(const QString &appId);
     std::optional<AppEntry> findApp(const QString &appId) const;
     QList<AppEntry> allApps() const;
     void updateLaunchStats(const QString &appId);

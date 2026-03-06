@@ -75,6 +75,6 @@ Rectangle {
 
     Component.onCompleted: {
         shell._stack = shell.StackView.view
-        appRunner.launchFromPath(examplesPath + "/" + shell.appDirName, appContainer)
+        appRunner.launchFromPath(installDir + "/" + shell.appDirName, appContainer)
     }
 }

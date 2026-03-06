@@ -13,8 +13,8 @@ public:
 
     std::expected<AppManifest, QString> install(const QString &sqappPath,
                                                 const QString &installDir);
-    bool uninstall(const QString &appId, const QString &installDir,
-                   const QString &storageRoot);
+    Q_INVOKABLE bool uninstall(const QString &appId, const QString &installDir,
+                               const QString &storageRoot);
     bool isInstalled(const QString &appId, const QString &installDir) const;
     QList<AppManifest> installedApps(const QString &installDir) const;
 

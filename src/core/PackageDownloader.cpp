@@ -18,6 +18,7 @@ PackageDownloader::PackageDownloader(AppInstaller *installer,
     : QObject(parent), m_installer(installer),
       m_storeBaseUrl(storeBaseUrl), m_storageRoot(storageRoot)
 {
+    m_nam.setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);
 }
 
 void PackageDownloader::download(const QString &appId, const QUrl &packageUrl,
@@ -63,8 +64,10 @@ void PackageDownloader::download(const QString &appId, const QUrl &packageUrl,
 
 void PackageDownloader::provisionSecrets(const QString &appId)
 {
-    auto url = m_storeBaseUrl.resolved(
-        QUrl(QStringLiteral("/api/apps/%1/secrets").arg(appId)));
+    auto baseStr = m_storeBaseUrl.toString();
+    if (!baseStr.endsWith(QLatin1Char('/')))
+        baseStr.append(QLatin1Char('/'));
+    auto url = QUrl(baseStr + QStringLiteral("api/apps/%1/secrets").arg(appId));
 
     auto *reply = m_nam.get(QNetworkRequest(url));
 

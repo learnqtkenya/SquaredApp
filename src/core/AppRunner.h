@@ -24,6 +24,7 @@ public:
                        QObject *parent = nullptr);
     ~AppRunner() override;
 
+    Q_INVOKABLE static bool pathExists(const QString &path);
     Q_INVOKABLE void launchFromPath(const QString &appDirPath, QQuickItem *container);
     Q_INVOKABLE void close();
     Q_INVOKABLE void suspend();

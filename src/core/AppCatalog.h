@@ -15,6 +15,8 @@ struct CatalogEntry {
     QUrl packageUrl;
     qint64 sizeBytes = 0;
     QString category;
+    QString icon;
+    QString color;
     QStringList permissions;
 };
 

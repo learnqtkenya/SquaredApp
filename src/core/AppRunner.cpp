@@ -6,6 +6,7 @@
 #include "SquaredApp.h"
 
 #include <QElapsedTimer>
+#include <QDir>
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QQmlComponent>
@@ -20,6 +21,11 @@ AppRunner::AppRunner(QQmlEngine *engine, const QString &storageRoot,
 AppRunner::~AppRunner()
 {
     cleanup();
+}
+
+bool AppRunner::pathExists(const QString &path)
+{
+    return QDir(path).exists();
 }
 
 void AppRunner::launchFromPath(const QString &appDirPath, QQuickItem *container)

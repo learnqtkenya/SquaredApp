@@ -8,7 +8,7 @@ ApplicationWindow {
     visible: true
     width: 400
     height: 700
-    title: " "
+    title: "Squared"
     color: STheme.background
 
     Component.onCompleted: {
@@ -61,12 +61,16 @@ ApplicationWindow {
                     { appDirName: appDir })
             }
 
+            function openStore() {
+                homeRoot.StackView.view.push(storePageComponent)
+            }
+
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: STheme.spacingMd
                 spacing: STheme.spacingSm
 
-                // Search bar + theme toggle + catalog icon
+                // Search bar + theme toggle + store icon
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: STheme.spacingSm
@@ -115,13 +119,26 @@ ApplicationWindow {
                             id: mouseStore
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: homeRoot.StackView.view.push(storePageComponent)
+                            onClicked: homeRoot.openStore()
                         }
                     }
                 }
 
+                // Empty state — shown when no apps installed
+                SEmptyState {
+                    visible: installedAppsModel ? installedAppsModel.rowCount() === 0 : true
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    icon: IconCodes.store
+                    title: "No apps installed"
+                    description: "Browse the store to discover and install apps"
+                    actionText: "Open Store"
+                    onActionClicked: homeRoot.openStore()
+                }
+
                 // App icon grid
                 GridView {
+                    visible: installedAppsModel ? installedAppsModel.rowCount() > 0 : false
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     cellWidth: width / SSize.gridColumns
@@ -187,5 +204,4 @@ ApplicationWindow {
             }
         }
     }
-
 }
