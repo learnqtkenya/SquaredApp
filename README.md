@@ -70,7 +70,7 @@ Downloads the latest binary for your platform. Installs to `~/.local/bin` (Linux
 ### Usage
 
 ```bash
-squared setup                 # Install SDK for IDE autocomplete
+squared setup                 # Install SDK + host app binary
 squared init my-app           # Scaffold a new app project
 squared run my-app            # Preview in Squared host app
 squared validate my-app       # Check manifest and file structure
@@ -80,9 +80,13 @@ squared update                # Update to latest version
 squared version               # Print installed version
 ```
 
-### IDE Setup
+### Setup
 
-Run `squared setup` once to install the SDK for IDE intellisense. This gives you autocomplete for:
+Run `squared setup` once to install:
+- **Squared host app** — pre-built binary for running and previewing apps
+- **SDK type stubs** — IDE intellisense for Squared.UI and Squared.SDK
+
+The SDK gives you autocomplete for:
 - **Squared.UI** — 28 themed QML components (SButton, SCard, SPage, etc.) plus STheme and IconCodes singletons
 - **Squared.SDK** — Storage, SecureStorage, Network, and App APIs
 
@@ -95,9 +99,23 @@ Works with any editor that supports Qt's QML Language Server (qmlls):
 
 ### Running Apps
 
-`squared run` launches your app in the Squared host app's dev mode. The host binary must be accessible — either on `PATH` or at `~/.squared/bin/Squared`.
+**As a user** — launch the Squared host app directly to browse the store catalog, install apps, and run them:
 
-### Build from source
+```bash
+~/.squared/bin/Squared              # Linux
+open ~/.squared/bin/Squared.app     # macOS
+~/.squared/bin/Squared.exe          # Windows
+```
+
+**As a developer** — preview your app with hot reload:
+
+```bash
+squared run my-app
+```
+
+Both modes are served by the same binary. `squared setup` downloads it automatically. If you build from source (`cmake --build build`), the binary is symlinked to `~/.squared/bin/` automatically.
+
+### Build CLI from source
 
 ```bash
 cd tools/squared-cli && ./sync-sdk.sh && go build -o squared .

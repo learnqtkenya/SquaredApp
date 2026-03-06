@@ -1,0 +1,100 @@
+name: Release Host Binary
+
+on:
+  push:
+    tags:
+      - "host-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: linux
+            arch: amd64
+          - os: macos-14
+            platform: darwin
+            arch: arm64
+          - os: macos-13
+            platform: darwin
+            arch: amd64
+          - os: windows-latest
+            platform: windows
+            arch: amd64
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          target: desktop
+          modules: qtshadertools
+          cache: true
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev libsecret-1-dev libdbus-1-dev \
+            ninja-build
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install ninja
+
+      - name: Install Windows dependencies
+        if: runner.os == 'Windows'
+        run: choco install ninja -y
+
+      # --- Configure ---
+      - name: Configure (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cmake -G Ninja -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH=$Qt6_DIR \
+            -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -G Ninja -B build `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="$env:Qt6_DIR" `
+            -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build
+        run: cmake --build build --target Squared
+
+      # Qt's deploy script (qt_generate_deploy_app_script) bundles
+      # Qt libs, plugins, and translations for all platforms
+      - name: Install
+        run: cmake --install build
+
+      # --- Package ---
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        run: tar czf squared-host_${{ matrix.platform }}_${{ matrix.arch }}.tar.gz -C install .
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path install/* -DestinationPath squared-host_${{ matrix.platform }}_${{ matrix.arch }}.zip
+
+      # --- Upload ---
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            squared-host_*.tar.gz
+            squared-host_*.zip

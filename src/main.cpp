@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QFontDatabase>
+#include <QIcon>
 #include <QStandardPaths>
 #include <QTimer>
 #include <QUrl>
@@ -26,6 +27,8 @@ int main(int argc, char *argv[])
     app.setApplicationName(QStringLiteral("Squared"));
     app.setApplicationVersion(QString::fromUtf8(config::project_version.data(),
                                                 config::project_version.size()));
+
+    app.setWindowIcon(QIcon(QStringLiteral(":/icons/squared-512.png")));
 
     QCommandLineParser parser;
     parser.setApplicationDescription(QStringLiteral("Squared \u2014 QML super app runtime"));

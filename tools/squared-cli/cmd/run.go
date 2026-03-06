@@ -44,22 +44,24 @@ func findHostBinary() (string, error) {
 		return p, nil
 	}
 
-	// Check common build locations relative to SDK install
+	// Check ~/.squared/bin/ (symlink from source build or downloaded binary)
 	home, err := os.UserHomeDir()
 	if err == nil {
-		candidates := []string{
-			filepath.Join(home, ".squared", "bin", "Squared"),
-		}
-		for _, c := range candidates {
+		binDir := filepath.Join(home, ".squared", "bin")
+		for _, name := range hostBinaryNames() {
+			c := filepath.Join(binDir, name)
 			if _, err := os.Stat(c); err == nil {
+				// macOS .app bundle: launch the binary inside
+				if filepath.Ext(c) == ".app" {
+					return filepath.Join(c, "Contents", "MacOS", "Squared"), nil
+				}
 				return c, nil
 			}
 		}
 	}
 
 	return "", fmt.Errorf("Squared host binary not found.\n\n" +
-		"To use 'squared run', the Squared host app must be built and accessible.\n" +
-		"Either:\n" +
-		"  1. Add the build directory to PATH: export PATH=/path/to/build/src:$PATH\n" +
-		"  2. Copy the binary: cp /path/to/build/src/Squared ~/.squared/bin/")
+		"Run 'squared setup' to download it, or build from source:\n" +
+		"  git clone https://github.com/learnqtkenya/SquaredApp\n" +
+		"  cd SquaredApp && cmake -G Ninja -B build && cmake --build build")
 }

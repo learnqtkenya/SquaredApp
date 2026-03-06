@@ -53,3 +53,9 @@ tools/squared-cli/internal/sdk/files/CMakeLists.txt
 # Squared
 *.sqapp
 CLAUDE.md
+
+# Release test artifacts
+build-release/
+install/
+squared-host_*.tar.gz
+squared-host_*.zip

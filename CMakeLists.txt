@@ -19,7 +19,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(BUILD_TRANSLATIONS OFF CACHE BOOL "" FORCE)
 set(BUILD_TEST_APPLICATION OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-add_subdirectory(external/qtkeychain)
+add_subdirectory(external/qtkeychain EXCLUDE_FROM_ALL)
 
 add_subdirectory(config)
 
@@ -32,11 +32,17 @@ add_subdirectory(src/core)
 add_subdirectory(src)
 
 if(ANDROID)
+    # Version code: MAJOR * 10000 + MINOR * 100 + PATCH (e.g., 0.1.0 → 100)
+    math(EXPR ANDROID_VERSION_CODE
+        "${PROJECT_VERSION_MAJOR} * 10000 + ${PROJECT_VERSION_MINOR} * 100 + ${PROJECT_VERSION_PATCH}")
+
     set_target_properties(Squared PROPERTIES
         QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android"
+        QT_ANDROID_TARGET_SDK_VERSION 34
+        QT_ANDROID_MIN_SDK_VERSION 26
+        QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
+        QT_ANDROID_VERSION_CODE "${ANDROID_VERSION_CODE}"
     )
-    set_property(TARGET Squared PROPERTY QT_ANDROID_TARGET_SDK_VERSION 34)
-    set_property(TARGET Squared PROPERTY QT_ANDROID_MIN_SDK_VERSION 26)
 endif()
 
 if(NOT ANDROID)
