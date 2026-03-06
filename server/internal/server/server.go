@@ -14,7 +14,8 @@ import (
 )
 
 type Server struct {
-	httpServer *http.Server
+	httpServer  *http.Server
+	authEnabled bool
 }
 
 func New(cfg config.Config, appStore store.AppStore, pool *pgxpool.Pool) *Server {
@@ -25,15 +26,20 @@ func New(cfg config.Config, appStore store.AppStore, pool *pgxpool.Pool) *Server
 	mux.HandleFunc("GET /readyz", handler.ReadinessHandler(pool))
 	mux.HandleFunc("GET /health", handler.ReadinessHandler(pool)) // backwards compat
 
-	// API routes
+	// Auth middleware for write endpoints
+	auth := middleware.AdminAuth(cfg.AdminToken)
+
+	// Public read routes
 	mux.HandleFunc("GET /api/catalog", handler.CatalogHandler(appStore))
 	mux.HandleFunc("GET /api/apps", handler.ListAppsHandler(appStore))
 	mux.HandleFunc("GET /api/apps/{id}/secrets", handler.GetSecretsHandler(appStore))
-	mux.HandleFunc("PUT /api/apps/{id}/secrets", handler.SetSecretsHandler(appStore))
 	mux.HandleFunc("GET /api/apps/{id...}", handler.GetAppHandler(appStore))
-	mux.HandleFunc("POST /api/apps", handler.CreateAppHandler(appStore))
-	mux.HandleFunc("PUT /api/apps/{id...}", handler.UpdateAppHandler(appStore))
-	mux.HandleFunc("DELETE /api/apps/{id...}", handler.DeleteAppHandler(appStore))
+
+	// Protected write routes
+	mux.Handle("POST /api/apps", auth(handler.CreateAppHandler(appStore)))
+	mux.Handle("PUT /api/apps/{id}/secrets", auth(handler.SetSecretsHandler(appStore)))
+	mux.Handle("PUT /api/apps/{id...}", auth(handler.UpdateAppHandler(appStore)))
+	mux.Handle("DELETE /api/apps/{id...}", auth(handler.DeleteAppHandler(appStore)))
 
 	// Middleware chain (outermost executes first)
 	var h http.Handler = mux
@@ -46,6 +52,7 @@ func New(cfg config.Config, appStore store.AppStore, pool *pgxpool.Pool) *Server
 	h = middleware.Recovery(h)
 
 	return &Server{
+		authEnabled: cfg.AdminToken != "",
 		httpServer: &http.Server{
 			Addr:              ":" + cfg.Port,
 			Handler:           h,
@@ -58,7 +65,7 @@ func New(cfg config.Config, appStore store.AppStore, pool *pgxpool.Pool) *Server
 }
 
 func (s *Server) ListenAndServe() error {
-	slog.Info("server starting", "addr", s.httpServer.Addr)
+	slog.Info("server starting", "addr", s.httpServer.Addr, "auth", s.authEnabled)
 	return s.httpServer.ListenAndServe()
 }
 

@@ -14,6 +14,7 @@ type Config struct {
 	MigrationsPath string
 	AllowedOrigins string
 	SecretsKey     string
+	AdminToken     string
 	LogLevel       string
 	RateLimit      float64
 	RateBurst      int
@@ -28,6 +29,7 @@ func Load() (Config, error) {
 		MigrationsPath: getEnv("MIGRATIONS_PATH", "file://migrations"),
 		AllowedOrigins: getEnv("ALLOWED_ORIGINS", "*"),
 		SecretsKey:     os.Getenv("SECRETS_KEY"),
+		AdminToken:     os.Getenv("ADMIN_TOKEN"),
 		LogLevel:       getEnv("LOG_LEVEL", "info"),
 	}
 
