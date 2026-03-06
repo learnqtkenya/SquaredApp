@@ -58,7 +58,7 @@ if(NOT ANDROID)
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 
-    qt_generate_deploy_app_script(
+    qt_generate_deploy_qml_app_script(
         TARGET Squared
         OUTPUT_SCRIPT deploy_script
         NO_UNSUPPORTED_PLATFORM_ERROR
