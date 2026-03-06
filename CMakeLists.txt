@@ -80,7 +80,7 @@ elseif(WIN32)
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "Squared")
     set(CPACK_PACKAGE_EXECUTABLES "Squared;Squared")
 
-    set(CPACK_GENERATOR "NSIS")
+    set(CPACK_GENERATOR "NSIS;ZIP")
     set(CPACK_NSIS_DISPLAY_NAME "Squared")
     set(CPACK_NSIS_PACKAGE_NAME "Squared")
     set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/assets/icons/squared.ico")

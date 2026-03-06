@@ -189,6 +189,26 @@ deb: install
 package-linux: deb appimage
 
 # ============================================================================
+# Windows packaging targets
+# ============================================================================
+
+.PHONY: portable installer package-windows
+
+portable: install
+	@echo "Building portable ZIP..."
+	cd $(BUILD_REL_DIR) && cpack -G ZIP
+	@echo ""
+	@echo "ZIP: $$(find $(BUILD_REL_DIR) -name '*.zip' | head -1)"
+
+installer: install
+	@echo "Building NSIS installer..."
+	cd $(BUILD_REL_DIR) && cpack -G NSIS
+	@echo ""
+	@echo "Installer: $$(find $(BUILD_REL_DIR) -name '*.exe' | head -1)"
+
+package-windows: portable installer
+
+# ============================================================================
 # Utilities
 # ============================================================================
 
@@ -209,6 +229,11 @@ help:
 	@echo "  make deb          Build .deb package"
 	@echo "  make appimage     Build AppImage"
 	@echo "  make package-linux  Build both"
+	@echo ""
+	@echo "Windows packaging:"
+	@echo "  make portable     Build portable ZIP"
+	@echo "  make installer    Build NSIS installer"
+	@echo "  make package-windows  Build both"
 	@echo ""
 	@echo "Android:"
 	@echo "  make android      Build APK + AAB (release)"
