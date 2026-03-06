@@ -1,5 +1,10 @@
 qt_add_executable(Squared main.cpp)
 
+# --- Windows exe icon ---
+if(WIN32)
+    target_sources(Squared PRIVATE ../assets/icons/squared.rc)
+endif()
+
 set_source_files_properties(../assets/icons/squared-512.png PROPERTIES QT_RESOURCE_ALIAS icons/squared-512.png)
 qt_add_resources(Squared "app_icons" FILES ../assets/icons/squared-512.png)
 

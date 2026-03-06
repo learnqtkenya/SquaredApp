@@ -54,7 +54,7 @@ jobs:
 
       - name: Install Windows dependencies
         if: runner.os == 'Windows'
-        run: choco install ninja -y
+        run: choco install ninja nsis -y
 
       # --- Configure ---
       - name: Configure (Unix)
@@ -86,10 +86,14 @@ jobs:
         if: runner.os != 'Windows'
         run: tar czf squared-host_${{ matrix.platform }}_${{ matrix.arch }}.tar.gz -C install .
 
-      - name: Package (Windows)
+      - name: Package (Windows zip)
         if: runner.os == 'Windows'
         shell: pwsh
         run: Compress-Archive -Path install/* -DestinationPath squared-host_${{ matrix.platform }}_${{ matrix.arch }}.zip
+
+      - name: Package (Windows installer)
+        if: runner.os == 'Windows'
+        run: cmake --build build --target package
 
       # --- Upload ---
       - name: Upload release asset
@@ -98,3 +102,4 @@ jobs:
           files: |
             squared-host_*.tar.gz
             squared-host_*.zip
+            build/Squared-*-win64.exe

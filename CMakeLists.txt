@@ -49,3 +49,33 @@ if(NOT ANDROID)
     enable_testing()
     add_subdirectory(tests)
 endif()
+
+# --- CPack / NSIS Installer (Windows) ---
+if(WIN32)
+    set(CPACK_PACKAGE_NAME "Squared")
+    set(CPACK_PACKAGE_VENDOR "Squared")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Squared — QML super app runtime")
+    set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "Squared")
+    set(CPACK_PACKAGE_EXECUTABLES "Squared;Squared")
+    set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+
+    set(CPACK_GENERATOR "NSIS")
+    set(CPACK_NSIS_DISPLAY_NAME "Squared")
+    set(CPACK_NSIS_PACKAGE_NAME "Squared")
+    set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/assets/icons/squared.ico")
+    set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/assets/icons/squared.ico")
+    set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\Squared.exe")
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+    set(CPACK_NSIS_MODIFY_PATH OFF)
+
+    # Start Menu + Desktop shortcuts
+    set(CPACK_NSIS_CREATE_ICONS_EXTRA
+        "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Squared.lnk' '$INSTDIR\\\\bin\\\\Squared.exe'
+         CreateShortCut '$DESKTOP\\\\Squared.lnk' '$INSTDIR\\\\bin\\\\Squared.exe'")
+    set(CPACK_NSIS_DELETE_ICONS_EXTRA
+        "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Squared.lnk'
+         Delete '$DESKTOP\\\\Squared.lnk'")
+
+    include(CPack)
+endif()
