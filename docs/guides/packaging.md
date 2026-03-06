@@ -102,15 +102,30 @@ cd server
 docker compose up
 ```
 
+### Authentication
+
+Write endpoints (create, update, delete) require an admin token passed as a Bearer token in the `Authorization` header:
+
+```
+Authorization: Bearer <ADMIN_TOKEN>
+```
+
+The token is configured on the server via the `ADMIN_TOKEN` environment variable. When empty, authentication is disabled (useful for local development).
+
+Read endpoints (catalog, list, get) are public and require no authentication.
+
 ### API Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/catalog` | Full catalog (supports ETag caching) |
-| GET | `/api/apps` | List all apps |
-| GET | `/api/apps/:id` | Get app by ID |
-| POST | `/api/apps` | Create/update app |
-| GET | `/healthz` | Health check |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/catalog` | No | Full catalog (supports ETag caching) |
+| GET | `/api/apps` | No | List all apps |
+| GET | `/api/apps/:id` | No | Get app by ID |
+| POST | `/api/apps` | **Yes** | Create app |
+| PUT | `/api/apps/:id` | **Yes** | Update app |
+| DELETE | `/api/apps/:id` | **Yes** | Delete app |
+| GET | `/healthz` | No | Liveness check |
+| GET | `/readyz` | No | Readiness check |
 
 ### Catalog Entry Fields
 

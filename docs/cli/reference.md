@@ -151,7 +151,14 @@ squared publish my-app.sqapp --package-url https://cdn.example.com/my-app.sqapp
 | `--token` | `$SQUARED_TOKEN` | Auth token |
 | `--package-url` | (empty) | Download URL for the package |
 
-Reads manifest from the ZIP and POSTs to `/api/apps`.
+Reads manifest from the ZIP and POSTs to `/api/apps`. The token is required — the store server rejects unauthenticated writes with `401 Unauthorized`.
+
+Set the token once via environment variable to avoid passing `--token` every time:
+
+```bash
+export SQUARED_TOKEN="your-admin-token"
+squared publish my-app.sqapp --server https://store.example.com
+```
 
 ---
 
