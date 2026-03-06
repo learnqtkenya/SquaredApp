@@ -50,15 +50,35 @@ if(NOT ANDROID)
     add_subdirectory(tests)
 endif()
 
-# --- CPack / NSIS Installer (Windows) ---
-if(WIN32)
+# --- CPack packaging ---
+set(CPACK_PACKAGE_NAME "squared")
+set(CPACK_PACKAGE_VENDOR "Squared")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Squared — QML super app runtime")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+
+if(UNIX AND NOT APPLE AND NOT ANDROID)
+    # .desktop file and icons
+    install(FILES linux/com.squared.app.desktop
+        DESTINATION share/applications)
+    install(DIRECTORY linux/icons/hicolor
+        DESTINATION share/icons)
+
+    # --- DEB ---
+    set(CPACK_GENERATOR "DEB;TGZ")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Squared <hello@squared.dev>")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
+    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/learnqtkenya/SquaredApp")
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OFF)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxcb1, libxkbcommon0, libgl1, libegl1, libfontconfig1, libdbus-1-3")
+    set(CPACK_DEBIAN_PACKAGE_DESCRIPTION
+        "Squared is a runtime and distribution platform for QML applications.\n Discover, install, and run QML apps inside a single host environment.")
+
+    include(CPack)
+elseif(WIN32)
     set(CPACK_PACKAGE_NAME "Squared")
-    set(CPACK_PACKAGE_VENDOR "Squared")
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Squared — QML super app runtime")
-    set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "Squared")
     set(CPACK_PACKAGE_EXECUTABLES "Squared;Squared")
-    set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 
     set(CPACK_GENERATOR "NSIS")
     set(CPACK_NSIS_DISPLAY_NAME "Squared")

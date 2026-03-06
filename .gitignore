@@ -42,6 +42,9 @@ Thumbs.db
 .env.*
 !.env.example
 
+# Build tools (downloaded on demand)
+tools/linuxdeploy-*.AppImage
+
 # Go
 server/bin/
 tools/squared-cli/squared

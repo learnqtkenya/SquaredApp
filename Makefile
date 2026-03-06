@@ -148,13 +148,54 @@ apk-debug:
 	@echo "Debug APK: $$(find $(BUILD_ANDROID)/src/android-build -name '*.apk' -path '*/debug/*' | head -1)"
 
 # ============================================================================
+# Linux packaging targets
+# ============================================================================
+
+LINUXDEPLOY     := tools/linuxdeploy-x86_64.AppImage
+LINUXDEPLOY_URL := https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+
+.PHONY: appimage deb package-linux
+
+$(LINUXDEPLOY):
+	@echo "Downloading linuxdeploy..."
+	@mkdir -p tools
+	@curl -sL $(LINUXDEPLOY_URL) -o $@ && chmod +x $@
+
+appimage: install $(LINUXDEPLOY)
+	@echo "Building AppImage..."
+	@rm -rf AppDir
+	@mkdir -p AppDir/usr
+	@cp -r $(INSTALL_DIR)/* AppDir/usr/
+	@mkdir -p AppDir/usr/share/applications AppDir/usr/share/icons
+	@cp linux/com.squared.app.desktop AppDir/usr/share/applications/
+	@cp -r linux/icons/hicolor AppDir/usr/share/icons/
+	./$(LINUXDEPLOY) \
+		--appdir AppDir \
+		--executable AppDir/usr/bin/Squared \
+		--desktop-file AppDir/usr/share/applications/com.squared.app.desktop \
+		--icon-file linux/icons/hicolor/256x256/apps/com.squared.app.png \
+		--output appimage
+	@mv Squared-*.AppImage dist/ 2>/dev/null || mv Squared-*.AppImage .
+	@rm -rf AppDir
+	@echo ""
+	@echo "AppImage: $$(ls Squared-*.AppImage dist/Squared-*.AppImage 2>/dev/null | head -1)"
+
+deb: install
+	@echo "Building DEB package..."
+	cd $(BUILD_REL_DIR) && cpack -G DEB
+	@echo ""
+	@echo "DEB: $$(find $(BUILD_REL_DIR) -name '*.deb' | head -1)"
+
+package-linux: deb appimage
+
+# ============================================================================
 # Utilities
 # ============================================================================
 
 .PHONY: clean distclean
 
 clean:
-	rm -rf $(BUILD_DIR) $(BUILD_REL_DIR) $(BUILD_ANDROID) $(INSTALL_DIR) $(DIST_DIR)
+	rm -rf $(BUILD_DIR) $(BUILD_REL_DIR) $(BUILD_ANDROID) $(INSTALL_DIR) $(DIST_DIR) AppDir
 
 help:
 	@echo "Desktop:"
@@ -163,6 +204,11 @@ help:
 	@echo "  make test         Run tests"
 	@echo "  make install      Install to $(INSTALL_DIR)/"
 	@echo "  make run APP=dir  Run app in dev mode"
+	@echo ""
+	@echo "Linux packaging:"
+	@echo "  make deb          Build .deb package"
+	@echo "  make appimage     Build AppImage"
+	@echo "  make package-linux  Build both"
 	@echo ""
 	@echo "Android:"
 	@echo "  make android      Build APK + AAB (release)"
