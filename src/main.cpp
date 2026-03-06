@@ -88,8 +88,20 @@ int main(int argc, char *argv[])
     ctx->setContextProperty(QStringLiteral("packageDownloader"), &downloader);
     ctx->setContextProperty(QStringLiteral("appCatalog"), &catalog);
     ctx->setContextProperty(QStringLiteral("installDir"), installDir);
-    ctx->setContextProperty(QStringLiteral("examplesPath"),
-                            QString::fromUtf8(config::examples_path.data(), config::examples_path.size()));
+    // Resolve examples path: prefer compile-time path (dev builds), fall back
+    // to installed location relative to executable (AppImage, packages, etc.)
+    auto configExamplesPath = QString::fromUtf8(config::examples_path.data(), config::examples_path.size());
+    QString examplesPathResolved;
+    if (QDir(configExamplesPath).exists()) {
+        examplesPathResolved = configExamplesPath;
+    } else {
+        auto appDir = QCoreApplication::applicationDirPath();
+        // Linux/macOS installed: <prefix>/bin/Squared → <prefix>/share/squared/examples/apps
+        auto installed = appDir + QStringLiteral("/../share/squared/examples/apps");
+        if (QDir(installed).exists())
+            examplesPathResolved = QFileInfo(installed).absoluteFilePath();
+    }
+    ctx->setContextProperty(QStringLiteral("examplesPath"), examplesPathResolved);
 
     // Hot reload objects — must outlive the if/else block to survive into app.exec()
     FileSystemWatcher watcher;
@@ -115,8 +127,7 @@ int main(int argc, char *argv[])
         engine.loadFromModule("Squared.Host", "DevWindow");
     } else {
         // Seed registry with example apps (adds any missing examples)
-        auto exPath = QString::fromUtf8(config::examples_path.data(), config::examples_path.size());
-        if (!exPath.isEmpty()) {
+        if (!examplesPathResolved.isEmpty()) {
             struct { const char *dir; const char *name; const char *icon;
                      const char *color; const char *id; } examples[] = {
                 { "hello-world", "Hello World", "\ue9b2", "#2196F3", "com.squared.helloworld" },

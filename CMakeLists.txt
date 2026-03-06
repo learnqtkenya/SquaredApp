@@ -78,6 +78,11 @@ endif()
 if(NOT ANDROID)
     enable_testing()
     add_subdirectory(tests)
+
+    # Install example apps alongside the binary
+    install(DIRECTORY examples/apps/
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/squared/examples/apps
+    )
 endif()
 
 # --- CPack packaging ---
