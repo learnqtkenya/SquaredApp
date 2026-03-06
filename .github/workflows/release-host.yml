@@ -20,6 +20,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install system dependencies
+        run: apt-get update && apt-get install -y libsecret-1-dev
+
       - name: Configure
         run: |
           QT_PREFIX=$(dirname $(dirname $(find /opt -name "Qt6Config.cmake" -path "*/cmake/Qt6/*" 2>/dev/null | head -1)))
