@@ -21,7 +21,7 @@ jobs:
           submodules: recursive
 
       - name: Install system dependencies
-        run: apt-get update && apt-get install -y libsecret-1-dev
+        run: apt-get update && apt-get install -y libsecret-1-dev curl file
 
       - name: Configure
         run: |
