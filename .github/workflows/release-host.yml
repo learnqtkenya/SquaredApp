@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             platform: linux
             arch: amd64
           - os: macos-14
@@ -46,6 +46,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libgl1-mesa-dev libsecret-1-dev libdbus-1-dev \
+            libxkbcommon-dev libxcb-xkb-dev \
             ninja-build
 
       - name: Install macOS dependencies
@@ -56,7 +57,7 @@ jobs:
         if: runner.os == 'Windows'
         run: choco install ninja nsis -y
 
-      # --- Configure ---
+      # --- Build ---
       - name: Configure (Unix)
         if: runner.os != 'Windows'
         run: |
@@ -74,26 +75,67 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=install
 
       - name: Build
-        run: cmake --build build --target Squared
+        run: cmake --build build --target Squared --parallel
 
-      # Qt's deploy script (qt_generate_deploy_app_script) bundles
-      # Qt libs, plugins, and translations for all platforms
+      # qt_generate_deploy_qml_app_script bundles Qt libs,
+      # QML modules, plugins, and translations
       - name: Install
         run: cmake --install build
 
+      # Remove unused Qt Controls styles (we use Basic only),
+      # debug tooling, and redundant plugins (~20 MB savings)
+      - name: Trim install
+        shell: bash
+        run: |
+          cd install
+          # Keep only Basic style — remove FluentWinUI3, Material, Imagine, Fusion, Universal
+          for style in FluentWinUI3 Material Imagine Fusion Universal; do
+            rm -rf qml/QtQuick/Controls/$style
+            rm -f lib/libQt6QuickControls2${style}* lib/libQt6QuickControls2${style}StyleImpl*
+          done
+          # Remove QML debug/profiling tools (not needed in release)
+          rm -rf plugins/qmltooling
+          # Remove eglfs device integrations (not needed for desktop)
+          rm -rf plugins/egldeviceintegrations
+
       # --- Package ---
-      - name: Package (Unix)
-        if: runner.os != 'Windows'
+      - name: Package (Linux tar.gz)
+        if: matrix.platform == 'linux'
         run: tar czf squared-host_${{ matrix.platform }}_${{ matrix.arch }}.tar.gz -C install .
 
-      - name: Package (Windows zip)
+      - name: Package (Linux DEB)
+        if: matrix.platform == 'linux'
+        run: cd build && cpack -G DEB
+
+      - name: Package (Linux AppImage)
+        if: matrix.platform == 'linux'
+        run: |
+          curl -sL https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -o linuxdeploy && chmod +x linuxdeploy
+          rm -rf AppDir && mkdir -p AppDir/usr
+          cp -r install/* AppDir/usr/
+          mkdir -p AppDir/usr/share/applications AppDir/usr/share/icons
+          cp linux/com.squared.app.desktop AppDir/usr/share/applications/
+          cp -r linux/icons/hicolor AppDir/usr/share/icons/
+          ./linuxdeploy \
+            --appdir AppDir \
+            --executable AppDir/usr/bin/Squared \
+            --desktop-file AppDir/usr/share/applications/com.squared.app.desktop \
+            --icon-file linux/icons/hicolor/256x256/apps/com.squared.app.png \
+            --output appimage
+          rm -rf AppDir linuxdeploy
+
+      - name: Package (macOS tar.gz)
+        if: matrix.platform == 'darwin'
+        run: tar czf squared-host_${{ matrix.platform }}_${{ matrix.arch }}.tar.gz -C install .
+
+      - name: Package (Windows portable ZIP)
         if: runner.os == 'Windows'
         shell: pwsh
         run: Compress-Archive -Path install/* -DestinationPath squared-host_${{ matrix.platform }}_${{ matrix.arch }}.zip
 
-      - name: Package (Windows installer)
+      - name: Package (Windows NSIS installer)
         if: runner.os == 'Windows'
-        run: cmake --build build --target package
+        run: cd build && cpack -G NSIS
 
       # --- Upload ---
       - name: Upload release asset
@@ -102,4 +144,6 @@ jobs:
           files: |
             squared-host_*.tar.gz
             squared-host_*.zip
+            build/squared-*.deb
+            Squared-*.AppImage
             build/Squared-*-win64.exe
