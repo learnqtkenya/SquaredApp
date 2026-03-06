@@ -9,17 +9,79 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  # --- Linux: Docker container with full Qt (includes CorePrivate) ---
+  build-linux:
+    runs-on: ubuntu-24.04
+    container:
+      image: carlonluca/qt-dev:6.8.3
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure
+        run: |
+          cmake -G Ninja -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH=/opt/Qt/6.8.3/gcc_64 \
+            -DCMAKE_INSTALL_PREFIX=install
+
+      - name: Build
+        run: cmake --build build --target Squared --parallel
+
+      - name: Install
+        run: cmake --install build
+
+      - name: Trim install
+        run: |
+          cd install
+          for style in FluentWinUI3 Material Imagine Fusion Universal; do
+            rm -rf qml/QtQuick/Controls/$style
+            rm -f lib/libQt6QuickControls2${style}* lib/libQt6QuickControls2${style}StyleImpl*
+          done
+          rm -rf plugins/qmltooling plugins/egldeviceintegrations
+
+      - name: Package (tar.gz)
+        run: tar czf squared-host_linux_amd64.tar.gz -C install .
+
+      - name: Package (DEB)
+        run: cd build && cpack -G DEB
+
+      - name: Package (AppImage)
+        run: |
+          curl -sL https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -o linuxdeploy && chmod +x linuxdeploy
+          rm -rf AppDir && mkdir -p AppDir/usr
+          cp -r install/* AppDir/usr/
+          mkdir -p AppDir/usr/share/applications AppDir/usr/share/icons
+          cp linux/com.squared.app.desktop AppDir/usr/share/applications/
+          cp -r linux/icons/hicolor AppDir/usr/share/icons/
+          ./linuxdeploy \
+            --appdir AppDir \
+            --executable AppDir/usr/bin/Squared \
+            --desktop-file AppDir/usr/share/applications/com.squared.app.desktop \
+            --icon-file linux/icons/hicolor/256x256/apps/com.squared.app.png \
+            --output appimage
+          rm -rf AppDir linuxdeploy
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            squared-host_linux_amd64.tar.gz
+            build/squared-*.deb
+            Squared-*.AppImage
+
+  # --- macOS + Windows: install-qt-action ---
+  build-desktop:
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
-            platform: linux
-            arch: amd64
           - os: macos-14
             platform: darwin
             arch: arm64
-          - os: macos-13
+          - os: macos-15
             platform: darwin
             arch: amd64
           - os: windows-latest
@@ -40,15 +102,6 @@ jobs:
           modules: qtshadertools
           cache: true
 
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgl1-mesa-dev libsecret-1-dev libdbus-1-dev \
-            libxkbcommon-dev libxcb-xkb-dev \
-            ninja-build
-
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
         run: brew install ninja
@@ -57,9 +110,8 @@ jobs:
         if: runner.os == 'Windows'
         run: choco install ninja nsis -y
 
-      # --- Build ---
-      - name: Configure (Unix)
-        if: runner.os != 'Windows'
+      - name: Configure (macOS)
+        if: runner.os == 'macOS'
         run: |
           cmake -G Ninja -B build \
             -DCMAKE_BUILD_TYPE=Release \
@@ -77,55 +129,21 @@ jobs:
       - name: Build
         run: cmake --build build --target Squared --parallel
 
-      # qt_generate_deploy_qml_app_script bundles Qt libs,
-      # QML modules, plugins, and translations
       - name: Install
         run: cmake --install build
 
-      # Remove unused Qt Controls styles (we use Basic only),
-      # debug tooling, and redundant plugins (~20 MB savings)
       - name: Trim install
         shell: bash
         run: |
           cd install
-          # Keep only Basic style — remove FluentWinUI3, Material, Imagine, Fusion, Universal
           for style in FluentWinUI3 Material Imagine Fusion Universal; do
             rm -rf qml/QtQuick/Controls/$style
             rm -f lib/libQt6QuickControls2${style}* lib/libQt6QuickControls2${style}StyleImpl*
           done
-          # Remove QML debug/profiling tools (not needed in release)
-          rm -rf plugins/qmltooling
-          # Remove eglfs device integrations (not needed for desktop)
-          rm -rf plugins/egldeviceintegrations
-
-      # --- Package ---
-      - name: Package (Linux tar.gz)
-        if: matrix.platform == 'linux'
-        run: tar czf squared-host_${{ matrix.platform }}_${{ matrix.arch }}.tar.gz -C install .
-
-      - name: Package (Linux DEB)
-        if: matrix.platform == 'linux'
-        run: cd build && cpack -G DEB
-
-      - name: Package (Linux AppImage)
-        if: matrix.platform == 'linux'
-        run: |
-          curl -sL https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -o linuxdeploy && chmod +x linuxdeploy
-          rm -rf AppDir && mkdir -p AppDir/usr
-          cp -r install/* AppDir/usr/
-          mkdir -p AppDir/usr/share/applications AppDir/usr/share/icons
-          cp linux/com.squared.app.desktop AppDir/usr/share/applications/
-          cp -r linux/icons/hicolor AppDir/usr/share/icons/
-          ./linuxdeploy \
-            --appdir AppDir \
-            --executable AppDir/usr/bin/Squared \
-            --desktop-file AppDir/usr/share/applications/com.squared.app.desktop \
-            --icon-file linux/icons/hicolor/256x256/apps/com.squared.app.png \
-            --output appimage
-          rm -rf AppDir linuxdeploy
+          rm -rf plugins/qmltooling plugins/egldeviceintegrations
 
       - name: Package (macOS tar.gz)
-        if: matrix.platform == 'darwin'
+        if: runner.os == 'macOS'
         run: tar czf squared-host_${{ matrix.platform }}_${{ matrix.arch }}.tar.gz -C install .
 
       - name: Package (Windows portable ZIP)
@@ -137,13 +155,10 @@ jobs:
         if: runner.os == 'Windows'
         run: cd build && cpack -G NSIS
 
-      # --- Upload ---
-      - name: Upload release asset
+      - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
           files: |
             squared-host_*.tar.gz
             squared-host_*.zip
-            build/squared-*.deb
-            Squared-*.AppImage
             build/Squared-*-win64.exe
