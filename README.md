@@ -2,50 +2,87 @@
 
 A Qt6/QML super app platform. Build QML apps, package them as `.sqapp` bundles, publish to the Squared Store, and run them inside the Squared host app.
 
+## Platforms
+
+| Platform | Build | Package |
+|----------|-------|---------|
+| Linux    | `make build` | AppImage, DEB |
+| macOS    | `make build` | .app bundle |
+| Windows  | `make build` | NSIS installer |
+| Android  | `make apk` / `make aab` | APK, AAB |
+
 ## Prerequisites
 
-- Qt 6.10.2 (`/opt/Qt/6.10.2` or set `CMAKE_PREFIX_PATH`)
-- CMake 3.21+, Ninja
-- C++20 compiler (GCC 11+, Clang 14+)
-- Go 1.25+ (for the developer CLI)
-- Android SDK, NDK r27+, JDK 17+ (for Android builds)
+- **Qt 6.10.2** — set `QT_DIR` or install to `/opt/Qt/6.10.2`
+- **CMake 3.21+** and **Ninja**
+- **C++23 compiler** (GCC 13+, Clang 16+, MSVC 2022)
+- **Go 1.25+** — for the developer CLI (`tools/squared-cli/`)
+- **Android** — SDK, NDK r27+, JDK 17 (see [Android build docs](docs/android-build.md))
+
+## Quick Start
+
+```bash
+make              # Build (debug)
+make test         # Run tests headlessly
+make run APP=examples/apps/hello-world  # Preview an app
+```
 
 ## Build
 
-### Desktop (Linux)
+All targets are available via `make`. Run `make help` for the full list.
+
+### Desktop
+
+```bash
+make                  # Debug build
+make release          # Release build
+make install          # Install to install/
+```
+
+Or directly with CMake:
 
 ```bash
 cmake -G Ninja -B build -DCMAKE_PREFIX_PATH=/opt/Qt/6.10.2/gcc_64
 cmake --build build
 ```
 
-### Android (arm64)
+### Android
 
 ```bash
-cmake -G Ninja -B build-android \
-  -DCMAKE_PREFIX_PATH=/opt/Qt/6.10.2/android_arm64_v8a \
-  -DCMAKE_TOOLCHAIN_FILE=/opt/Qt/6.10.2/android_arm64_v8a/lib/cmake/Qt6/qt.toolchain.cmake \
-  -DANDROID_SDK_ROOT=$ANDROID_SDK_ROOT \
-  -DANDROID_NDK_ROOT=$ANDROID_NDK_ROOT \
-  -DQT_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake
-cmake --build build-android
+make apk              # Release APK (signed)
+make aab              # Release AAB (signed)
+make apk-debug        # Debug APK (no signing)
+make android          # Both APK + AAB
 ```
 
-Requires Android SDK, NDK r27+, and JDK 17+. Set `ANDROID_SDK_ROOT`, `ANDROID_NDK_ROOT`, and `JAVA_HOME` environment variables.
+Requires `JAVA_HOME`, `ANDROID_HOME`, and `ANDROID_NDK_ROOT` environment variables. See [docs/android-build.md](docs/android-build.md) for full setup and the standalone build script at [tools/build-android.sh](tools/build-android.sh).
+
+### Linux Packaging
+
+```bash
+make deb              # Build .deb package
+make appimage         # Build AppImage (downloads linuxdeploy on first run)
+make package-linux    # Build both
+```
+
+### Windows Packaging
+
+```bash
+make release
+cd build-release && cpack -G NSIS
+```
+
+Generates an NSIS installer with Start Menu and Desktop shortcuts.
 
 ## Test
 
 ```bash
+make test
+# or directly:
 QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure
 ```
 
 38 tests: 30 QML component tests + 8 C++ tests covering manifest parsing, app runner, storage, installer, catalog, registry, secure storage, and network client.
-
-## Run
-
-```bash
-./build/src/Squared
-```
 
 ## Developer CLI
 
@@ -65,8 +102,6 @@ curl -fsSL https://squared.co.ke/install.sh | sh
 irm https://squared.co.ke/install.ps1 | iex
 ```
 
-Downloads the latest binary for your platform. Installs to `~/.local/bin` (Linux/macOS) or `%LOCALAPPDATA%\Squared\bin` (Windows).
-
 ### Usage
 
 ```bash
@@ -77,7 +112,6 @@ squared validate my-app       # Check manifest and file structure
 squared package my-app        # Create .sqapp bundle
 squared publish app.sqapp     # Publish metadata to store server
 squared update                # Update to latest version
-squared version               # Print installed version
 ```
 
 ### Setup
@@ -99,12 +133,12 @@ Works with any editor that supports Qt's QML Language Server (qmlls):
 
 ### Running Apps
 
-**As a user** — launch the Squared host app directly to browse the store catalog, install apps, and run them:
+**As a user** — launch the Squared host app to browse the store catalog, install apps, and run them:
 
 ```bash
 ~/.squared/bin/Squared              # Linux
 open ~/.squared/bin/Squared.app     # macOS
-~/.squared/bin/Squared.exe          # Windows
+%LOCALAPPDATA%\Squared\bin\Squared.exe  # Windows
 ```
 
 **As a developer** — preview your app with hot reload:
@@ -113,9 +147,9 @@ open ~/.squared/bin/Squared.app     # macOS
 squared run my-app
 ```
 
-Both modes are served by the same binary. `squared setup` downloads it automatically. If you build from source (`cmake --build build`), the binary is symlinked to `~/.squared/bin/` automatically.
+Both modes are served by the same binary. `squared setup` downloads it automatically. Building from source (`make build`) symlinks the binary to `~/.squared/bin/` automatically.
 
-### Build CLI from source
+### Build CLI from Source
 
 ```bash
 cd tools/squared-cli && ./sync-sdk.sh && go build -o squared .
@@ -131,6 +165,25 @@ cd server && docker compose up
 # Endpoints: GET /api/catalog, GET/POST /api/apps, GET /healthz
 ```
 
+## Example Apps
+
+12 example apps in [examples/apps/](examples/apps/):
+
+| App | Description |
+|-----|-------------|
+| hello-world | Minimal starter app |
+| counter | State management basics |
+| todo | CRUD with local storage |
+| finance | Budget tracker with charts |
+| weather | API integration (network SDK) |
+| markdown-notes | Rich text editing |
+| pomodoro-timer | Timer with notifications |
+| habit-tracker | Daily habit tracking |
+| unit-converter | Unit conversion utility |
+| color-picker | HSL/RGB color tool |
+| qml-playground | Live QML editor |
+| iot-dashboard | Sensor dashboard UI |
+
 ## Project Structure
 
 ```
@@ -141,13 +194,20 @@ src/
   sdk/storage/              AppStorage (key-value) + SecureStorage (keychain/file)
   sdk/network/              NetworkClient (sandboxed HTTP)
   sdk/core/                 SquaredApp (lifecycle + metadata)
-qml/                        Host app pages (Main, StorePage, AppShell)
+qml/                        Host app pages (Main, StorePage, InstalledPage, AppShell)
+android/                    AndroidManifest.xml and Gradle config
+linux/                      .desktop file and hicolor icons
+ios/                        Asset catalog (AppIcon)
+assets/icons/               Platform icons (.ico, .icns, .png, .rc)
 server/                     Go store backend + PostgreSQL migrations
-tools/squared-cli/          Developer CLI (Go)
-examples/apps/              hello-world, counter, todo, finance, weather
+tools/
+  squared-cli/              Developer CLI (Go)
+  build-android.sh          Standalone Android build script
+examples/apps/              12 example apps
 tests/                      QTest (cpp/) + QML TestCase (qml/)
+Makefile                    Cross-platform build targets
 ```
 
 ## License
 
-All rights reserved.
+[MIT](LICENSE)
