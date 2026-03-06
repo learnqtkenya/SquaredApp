@@ -54,19 +54,22 @@ jobs:
 
       - name: Package (AppImage)
         run: |
-          curl -sL https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -o linuxdeploy && chmod +x linuxdeploy
+          curl -sL https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -o linuxdeploy.AppImage
+          chmod +x linuxdeploy.AppImage
+          ./linuxdeploy.AppImage --appimage-extract
+          mv squashfs-root linuxdeploy-extracted
           rm -rf AppDir && mkdir -p AppDir/usr
           cp -r install/* AppDir/usr/
           mkdir -p AppDir/usr/share/applications AppDir/usr/share/icons
           cp linux/com.squared.app.desktop AppDir/usr/share/applications/
           cp -r linux/icons/hicolor AppDir/usr/share/icons/
-          ./linuxdeploy \
+          ./linuxdeploy-extracted/AppRun \
             --appdir AppDir \
             --executable AppDir/usr/bin/Squared \
             --desktop-file AppDir/usr/share/applications/com.squared.app.desktop \
             --icon-file linux/icons/hicolor/256x256/apps/com.squared.app.png \
             --output appimage
-          rm -rf AppDir linuxdeploy
+          rm -rf AppDir linuxdeploy-extracted linuxdeploy.AppImage
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
