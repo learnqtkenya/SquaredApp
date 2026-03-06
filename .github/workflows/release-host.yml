@@ -25,7 +25,7 @@ jobs:
 
       - name: Configure
         run: |
-          QT_PREFIX=$(dirname $(dirname $(find /opt -name "Qt6Config.cmake" -path "*/cmake/Qt6/*" 2>/dev/null | head -1)))
+          QT_PREFIX=$(dirname $(dirname $(find /opt -name "Qt6Config.cmake" -path "*/cmake/Qt6/*" ! -path "*arm*" 2>/dev/null | head -1)))
           cmake -G Ninja -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$QT_PREFIX" \
