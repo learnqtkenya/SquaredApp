@@ -1,8 +1,20 @@
 qt_add_executable(Squared main.cpp)
 
-# --- Windows exe icon ---
+# --- Platform icons ---
 if(WIN32)
     target_sources(Squared PRIVATE ../assets/icons/squared.rc)
+elseif(APPLE AND NOT ANDROID)
+    set_target_properties(Squared PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_ICON_FILE squared.icns
+        MACOSX_BUNDLE_BUNDLE_NAME "Squared"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.squared.app"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+    )
+    set(MACOS_ICON "${CMAKE_SOURCE_DIR}/assets/icons/squared.icns")
+    set_source_files_properties(${MACOS_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(Squared PRIVATE ${MACOS_ICON})
 endif()
 
 set_source_files_properties(../assets/icons/squared-512.png PROPERTIES QT_RESOURCE_ALIAS icons/squared-512.png)
@@ -39,26 +51,28 @@ target_link_libraries(Squared PRIVATE
 
 target_include_directories(Squared PRIVATE ${CONFIG_INCLUDE_DIR})
 
-# --- Install ---
-install(TARGETS Squared
-    BUNDLE  DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-qt_generate_deploy_app_script(
-    TARGET Squared
-    OUTPUT_SCRIPT deploy_script
-    NO_UNSUPPORTED_PLATFORM_ERROR
-)
-install(SCRIPT ${deploy_script})
-
-# Symlink built binary to ~/.squared/bin/ so `squared run` finds it during development
-if(NOT CMAKE_CROSSCOMPILING)
-    set(SQUARED_BIN_DIR "$ENV{HOME}/.squared/bin")
-    add_custom_command(TARGET Squared POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${SQUARED_BIN_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
-            "$<TARGET_FILE:Squared>" "${SQUARED_BIN_DIR}/Squared"
-        COMMENT "Symlinking Squared binary to ${SQUARED_BIN_DIR}/"
+# --- Desktop install (not applicable for Android) ---
+if(NOT ANDROID)
+    install(TARGETS Squared
+        BUNDLE  DESTINATION .
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
+
+    qt_generate_deploy_app_script(
+        TARGET Squared
+        OUTPUT_SCRIPT deploy_script
+        NO_UNSUPPORTED_PLATFORM_ERROR
+    )
+    install(SCRIPT ${deploy_script})
+
+    # Symlink built binary to ~/.squared/bin/ so `squared run` finds it during development
+    if(NOT CMAKE_CROSSCOMPILING)
+        set(SQUARED_BIN_DIR "$ENV{HOME}/.squared/bin")
+        add_custom_command(TARGET Squared POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${SQUARED_BIN_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+                "$<TARGET_FILE:Squared>" "${SQUARED_BIN_DIR}/Squared"
+            COMMENT "Symlinking Squared binary to ${SQUARED_BIN_DIR}/"
+        )
+    endif()
 endif()

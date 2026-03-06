@@ -6,6 +6,7 @@
 #include <QFileInfo>
 #include <QFontDatabase>
 #include <QIcon>
+#include <QQuickStyle>
 #include <QStandardPaths>
 #include <QTimer>
 #include <QUrl>
@@ -29,6 +30,9 @@ int main(int argc, char *argv[])
                                                 config::project_version.size()));
 
     app.setWindowIcon(QIcon(QStringLiteral(":/icons/squared-512.png")));
+
+
+    QQuickStyle::setStyle(QStringLiteral("Basic"));
 
     QCommandLineParser parser;
     parser.setApplicationDescription(QStringLiteral("Squared \u2014 QML super app runtime"));

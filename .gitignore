@@ -9,8 +9,7 @@ qrc_*
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-# CMake-generated Makefiles (not server/Makefile which is source)
-/Makefile
+# CMake-generated Makefiles (not root Makefile or server/Makefile which are source)
 .qmake.statedb
 
 # IDE
