@@ -1,0 +1,64 @@
+site_name: Squared Docs
+site_description: Documentation for the Squared QML super app platform
+site_url: https://learnqtkenya.github.io/SquaredApp/
+repo_url: https://github.com/learnqtkenya/SquaredApp
+repo_name: learnqtkenya/SquaredApp
+
+theme:
+  name: material
+  logo: img/squared-192.png
+  favicon: img/favicon.ico
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - attr_list
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Your First App: getting-started/first-app.md
+  - SDK Reference:
+    - Storage: sdk/storage.md
+    - Secure Storage: sdk/secure-storage.md
+    - Network: sdk/network.md
+    - App Lifecycle: sdk/app-lifecycle.md
+  - UI Components:
+    - Overview: ui/overview.md
+    - Components: ui/components.md
+  - Guides:
+    - Manifest Format: guides/manifest.md
+    - Packaging & Publishing: guides/packaging.md
+    - Permissions: guides/permissions.md
+    - Android Build: guides/android.md
+  - CLI Reference: cli/reference.md

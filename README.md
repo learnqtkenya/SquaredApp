@@ -11,6 +11,10 @@
 > [!WARNING]
 > Squared is a learning/toy project built to explore the super app pattern with Qt. It is not intended for production use.
 
+<p align="center">
+  <a href="https://learnqtkenya.github.io/SquaredApp/">Documentation</a>
+</p>
+
 ## Platforms
 
 | Platform | Build | Package |

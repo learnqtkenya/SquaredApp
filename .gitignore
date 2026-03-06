@@ -56,6 +56,9 @@ tools/squared-cli/internal/sdk/files/CMakeLists.txt
 *.sqapp
 CLAUDE.md
 
+# MkDocs
+site/
+
 # Release test artifacts
 build-release/
 install/
