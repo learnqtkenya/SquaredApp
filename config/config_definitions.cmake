@@ -4,7 +4,7 @@ define_config_option(
     NAME STORE_URL
     TYPE STRING
     DESCRIPTION "Squared Store server URL"
-    DEFAULT "https://squared.co.ke"
+    DEFAULT "https://proms.alwaysdata.net/squared-store"
 )
 
 define_config_option(

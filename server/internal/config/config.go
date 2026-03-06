@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -18,6 +20,8 @@ type Config struct {
 }
 
 func Load() (Config, error) {
+	_ = godotenv.Load()
+
 	cfg := Config{
 		Port:           getEnv("PORT", "8080"),
 		DatabaseURL:    getEnv("DATABASE_URL", "postgres://squared:squared@db:5432/squared?sslmode=disable"),

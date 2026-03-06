@@ -9,7 +9,8 @@ qrc_*
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-Makefile
+# CMake-generated Makefiles (not server/Makefile which is source)
+/Makefile
 .qmake.statedb
 
 # IDE
@@ -37,7 +38,13 @@ dist/
 .DS_Store
 Thumbs.db
 
+# Environment
+.env
+.env.*
+!.env.example
+
 # Go
+server/bin/
 tools/squared-cli/squared
 tools/squared-cli/internal/sdk/files/ui/
 tools/squared-cli/internal/sdk/files/api/
