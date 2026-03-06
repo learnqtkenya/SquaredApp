@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  # --- Linux: Docker container with full Qt (includes CorePrivate) ---
+  # --- Linux: Docker container with full Qt ---
   build-linux:
     runs-on: ubuntu-24.04
     container:
@@ -22,9 +22,10 @@ jobs:
 
       - name: Configure
         run: |
+          QT_PREFIX=$(dirname $(dirname $(find /opt -name "Qt6Config.cmake" -path "*/cmake/Qt6/*" 2>/dev/null | head -1)))
           cmake -G Ninja -B build \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH=/opt/Qt/6.8.3/gcc_64 \
+            -DCMAKE_PREFIX_PATH="$QT_PREFIX" \
             -DCMAKE_INSTALL_PREFIX=install
 
       - name: Build
@@ -109,6 +110,10 @@ jobs:
       - name: Install Windows dependencies
         if: runner.os == 'Windows'
         run: choco install ninja nsis -y
+
+      - name: Setup MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure (macOS)
         if: runner.os == 'macOS'
