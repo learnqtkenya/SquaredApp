@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
 )
 
 // RunRun launches the app at the given path in the Squared host app's dev mode.
@@ -38,9 +40,26 @@ func RunRun(appPath string) error {
 	return cmd.Run()
 }
 
+// isSelf checks whether a resolved path points to the CLI binary itself.
+// On Windows the filesystem is case-insensitive, so LookPath("Squared")
+// can resolve to the "squared.exe" CLI binary instead of the Qt host app.
+func isSelf(candidate string) bool {
+	self, err := os.Executable()
+	if err != nil {
+		return false
+	}
+	selfResolved, _ := filepath.EvalSymlinks(self)
+	candResolved, _ := filepath.EvalSymlinks(candidate)
+	if runtime.GOOS == "windows" {
+		return strings.EqualFold(selfResolved, candResolved)
+	}
+	return selfResolved == candResolved
+}
+
 func findHostBinary() (string, error) {
-	// Check PATH first
-	if p, err := exec.LookPath("Squared"); err == nil {
+	// Check PATH first — but skip if it resolves to this CLI binary
+	// (Windows is case-insensitive: "Squared" can match "squared.exe")
+	if p, err := exec.LookPath("Squared"); err == nil && !isSelf(p) {
 		return p, nil
 	}
 
@@ -51,6 +70,9 @@ func findHostBinary() (string, error) {
 		for _, name := range hostBinaryNames() {
 			c := filepath.Join(binDir, name)
 			if _, err := os.Stat(c); err == nil {
+				if isSelf(c) {
+					continue
+				}
 				// macOS .app bundle: launch the binary inside
 				if filepath.Ext(c) == ".app" {
 					return filepath.Join(c, "Contents", "MacOS", "Squared"), nil
