@@ -19,11 +19,11 @@ elseif(IOS)
         set_source_files_properties("${CMAKE_SOURCE_DIR}/ios/Assets.xcassets"
             PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     endif()
-    if(EXISTS "${CMAKE_SOURCE_DIR}/ios/LaunchScreen.storyboard")
-        target_sources(Squared PRIVATE "${CMAKE_SOURCE_DIR}/ios/LaunchScreen.storyboard")
-        set_target_properties(Squared PROPERTIES
-            XCODE_ATTRIBUTE_INFOPLIST_KEY_UILaunchStoryboardName "LaunchScreen")
-    endif()
+    # Use modern UILaunchScreen dict via Info.plist keys (no storyboard file needed).
+    # This shows a plain background color matching our theme on launch.
+    set_target_properties(Squared PROPERTIES
+        XCODE_ATTRIBUTE_INFOPLIST_KEY_UILaunchScreen_Generation YES
+    )
 elseif(APPLE AND NOT ANDROID)
     set_target_properties(Squared PROPERTIES
         MACOSX_BUNDLE TRUE
