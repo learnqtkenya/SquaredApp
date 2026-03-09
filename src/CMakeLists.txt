@@ -21,8 +21,6 @@ elseif(IOS)
     endif()
     if(EXISTS "${CMAKE_SOURCE_DIR}/ios/LaunchScreen.storyboard")
         target_sources(Squared PRIVATE "${CMAKE_SOURCE_DIR}/ios/LaunchScreen.storyboard")
-        set_source_files_properties("${CMAKE_SOURCE_DIR}/ios/LaunchScreen.storyboard"
-            PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
         set_target_properties(Squared PROPERTIES
             XCODE_ATTRIBUTE_INFOPLIST_KEY_UILaunchStoryboardName "LaunchScreen")
     endif()
