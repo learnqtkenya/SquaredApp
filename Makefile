@@ -107,13 +107,15 @@ export ANDROID_NDK_ROOT
 NDK_TOOLCHAIN := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin
 export PATH := $(JAVA_HOME)/bin:$(NDK_TOOLCHAIN):$(PATH)
 
-# Signing
+# Tools and signing
+ADB              := $(ANDROID_HOME)/platform-tools/adb
 KEYSTORE_DIR     ?= $(HOME)/.android-keystore
 KEYSTORE_FILE    := $(KEYSTORE_DIR)/release.keystore
 KEYSTORE_ALIAS   := squared-release
 ANDROID_BUILD_OUT := $(BUILD_ANDROID)/src/android-build
+ANDROID_PKG      := com.squared.app
 
-.PHONY: android apk aab apk-debug android-configure android-clean android-check create-keystore
+.PHONY: android apk aab apk-debug android-configure android-clean android-check create-keystore deploy deploy-debug launch logcat
 
 android-check:
 	@test -d "$(QT_ANDROID)" || (echo "Error: Qt Android not found at $(QT_ANDROID)" && exit 1)
@@ -204,6 +206,24 @@ apk-debug: android-check
 
 android-clean:
 	rm -rf $(BUILD_ANDROID) $(DIST_DIR)
+
+deploy: apk
+	@APK=$$(ls $(DIST_DIR)/squared-release.apk $(DIST_DIR)/squared-unsigned.apk 2>/dev/null | head -1); \
+	if [ -z "$$APK" ]; then echo "Error: no APK found in $(DIST_DIR)/"; exit 1; fi; \
+	echo "Installing $$APK..."; \
+	$(ADB) install -r "$$APK"; \
+	echo "Installed. Run: make launch"
+
+deploy-debug: apk-debug
+	@echo "Installing debug APK..."
+	$(ADB) install -r $(DIST_DIR)/squared-debug.apk
+	@echo "Installed. Run: make launch"
+
+launch:
+	$(ADB) shell am start -n $(ANDROID_PKG)/org.qtproject.qt.android.bindings.QtActivity
+
+logcat:
+	$(ADB) logcat -s "Qt:*" "qtlogging:*" "Squared:*" "AndroidRuntime:E"
 
 create-keystore:
 	@mkdir -p $(KEYSTORE_DIR)
@@ -317,6 +337,10 @@ help:
 	@echo "  make apk            Build signed APK"
 	@echo "  make aab            Build signed AAB"
 	@echo "  make apk-debug      Build debug APK (no signing)"
+	@echo "  make deploy         Build + install release APK on device"
+	@echo "  make deploy-debug   Build + install debug APK on device"
+	@echo "  make launch         Start app on connected device"
+	@echo "  make logcat         Stream Qt/app logs from device"
 	@echo "  make create-keystore  Generate release keystore"
 	@echo "  make android-clean  Remove Android build + dist"
 	@echo ""
