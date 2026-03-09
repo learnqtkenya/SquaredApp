@@ -425,8 +425,7 @@ ios-sim-configure: ios-check
 		-S . \
 		-B $(BUILD_IOS_SIM) \
 		-DCMAKE_TOOLCHAIN_FILE=$(QT_IOS)/lib/cmake/Qt6/qt.toolchain.cmake \
-		-DCMAKE_OSX_SYSROOT=iphonesimulator \
-		-DCMAKE_OSX_ARCHITECTURES=arm64
+		-DCMAKE_OSX_SYSROOT=iphonesimulator
 	@echo ""
 	@echo "Xcode project: $(BUILD_IOS_SIM)/Squared.xcodeproj"
 
