@@ -73,6 +73,31 @@ if(ANDROID)
         QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
         QT_ANDROID_VERSION_CODE "${ANDROID_VERSION_CODE}"
     )
+
+    # Copy Android resource directories (mipmap icons, etc.) into the
+    # android-build staging area. androiddeployqt copies AndroidManifest.xml
+    # but doesn't always merge custom res/ subdirectories.
+    set(_android_build_res "${CMAKE_BINARY_DIR}/src/android-build/res")
+    add_custom_command(TARGET Squared POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/android/res" "${_android_build_res}"
+        COMMENT "Copying Android resources (icons) to android-build/res/"
+    )
+
+    # Bundle OpenSSL for TLS/HTTPS support on Android.
+    # Qt on Android requires shipping libssl and libcrypto since Android
+    # does not expose a system OpenSSL to apps.
+    set(ANDROID_OPENSSL_DIR "$ENV{ANDROID_HOME}/android_openssl"
+        CACHE PATH "Path to KDAB/android_openssl prebuilt libs")
+    if(EXISTS "${ANDROID_OPENSSL_DIR}/CMakeLists.txt")
+        include("${ANDROID_OPENSSL_DIR}/CMakeLists.txt")
+        set_target_properties(Squared PROPERTIES
+            QT_ANDROID_EXTRA_LIBS "${ANDROID_EXTRA_LIBS}"
+        )
+    else()
+        message(WARNING "Android OpenSSL not found at ${ANDROID_OPENSSL_DIR} — HTTPS will not work. "
+            "Clone https://github.com/nicphi/android_openssl into $ANDROID_HOME/android_openssl")
+    endif()
 endif()
 
 if(NOT ANDROID)
