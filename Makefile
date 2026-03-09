@@ -351,17 +351,34 @@ package-windows: portable installer
 
 MACDEPLOYQT      := $(QT_DIR)/bin/macdeployqt
 
-.PHONY: dmg package-macos
+# Code signing identity for macOS distribution.
+# Set to "Developer ID Application: Your Name (TEAMID)" for notarizable builds.
+# Defaults to ad-hoc signing (-) for local/dev builds.
+CODESIGN_ID      ?= -
+
+.PHONY: dmg package-macos codesign
 
 dmg: install
 	@echo "Creating macOS .app bundle..."
 	$(MACDEPLOYQT) $(INSTALL_DIR)/Squared.app -qmldir=qml -verbose=1
+	@echo "Signing app bundle..."
+	@codesign --force --deep --sign "$(CODESIGN_ID)" $(INSTALL_DIR)/Squared.app
 	@echo "Creating DMG..."
 	@mkdir -p dist/macos
 	@hdiutil create -volname "Squared" -srcfolder $(INSTALL_DIR)/Squared.app \
 		-ov -format UDZO dist/macos/Squared-$(PROJECT_VERSION).dmg
+	@if [ "$(CODESIGN_ID)" != "-" ]; then \
+		echo "Signing DMG..."; \
+		codesign --force --sign "$(CODESIGN_ID)" dist/macos/Squared-$(PROJECT_VERSION).dmg; \
+	fi
 	@echo ""
-	@echo "DMG: $$(ls dist/macos/Squared-*.dmg 2>/dev/null | head -1)"
+	@echo "DMG: dist/macos/Squared-$(PROJECT_VERSION).dmg"
+
+codesign:
+	@echo "Re-signing app bundle..."
+	@codesign --force --deep --sign "$(CODESIGN_ID)" $(INSTALL_DIR)/Squared.app
+	@codesign --verify --verbose $(INSTALL_DIR)/Squared.app
+	@echo "Signed with: $(CODESIGN_ID)"
 
 package-macos: dmg
 
@@ -443,7 +460,9 @@ help:
 	@echo "  make package-windows  Build both"
 	@echo ""
 	@echo "macOS packaging:"
-	@echo "  make dmg          Build .dmg disk image"
+	@echo "  make dmg          Build .dmg (ad-hoc signed)"
+	@echo "  make dmg CODESIGN_ID='Developer ID Application: ...'  Signed DMG"
+	@echo "  make codesign     Re-sign existing app bundle"
 	@echo ""
 	@echo "iOS:"
 	@echo "  make ios            Build iOS .app (Xcode required)"
