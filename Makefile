@@ -74,6 +74,9 @@ QT_ANDROID       ?= /opt/Qt/$(QT_VERSION)/android_arm64_v8a
 # --- iOS SDK (override via env) ---
 QT_IOS           ?= $(HOME)/Qt/$(QT_VERSION)/ios
 
+# --- Project version (from CMakeLists.txt project() call) ---
+PROJECT_VERSION  := $(shell sed -n 's/^project.*VERSION \([0-9][0-9.]*\).*/\1/p' CMakeLists.txt)
+
 # --- Directories ---
 BUILD_DIR        := build
 BUILD_REL_DIR    := build-release
@@ -356,7 +359,7 @@ dmg: install
 	@echo "Creating DMG..."
 	@mkdir -p dist/macos
 	@hdiutil create -volname "Squared" -srcfolder $(INSTALL_DIR)/Squared.app \
-		-ov -format UDZO dist/macos/Squared-$(shell grep 'VERSION ' CMakeLists.txt | head -1 | sed 's/.*VERSION //' | sed 's/ .*//').dmg
+		-ov -format UDZO dist/macos/Squared-$(PROJECT_VERSION).dmg
 	@echo ""
 	@echo "DMG: $$(ls dist/macos/Squared-*.dmg 2>/dev/null | head -1)"
 
