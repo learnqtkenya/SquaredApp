@@ -389,12 +389,15 @@ package-macos: dmg
 IOS_BUNDLE_ID    ?= com.squared.app
 IOS_TEAM_ID      ?= $(DEVELOPMENT_TEAM)
 
-.PHONY: ios-check ios-configure ios ipa ios-clean
+.PHONY: ios-check ios-configure ios ios-sim-configure ios-sim ipa ios-clean
+
+BUILD_IOS_SIM    := build-ios-sim
 
 ios-check:
 	@test -d "$(QT_IOS)" || (echo "Error: Qt iOS not found at $(QT_IOS). Install via Qt Maintenance Tool." && exit 1)
 	@which xcodebuild > /dev/null 2>&1 || (echo "Error: Xcode command line tools not found" && exit 1)
 
+# --- Device build (requires signing) ---
 ios-configure: ios-check
 	$(QT_IOS)/bin/qt-cmake \
 		-G Xcode \
@@ -414,6 +417,25 @@ ios: ios-configure
 	@echo ""
 	@echo "iOS app built: $$(find $(BUILD_IOS) -name 'Squared.app' -path '*/Release-*' | head -1)"
 
+# --- Simulator build (no signing required) ---
+ios-sim-configure: ios-check
+	$(QT_IOS)/bin/qt-cmake \
+		-G Xcode \
+		-S . \
+		-B $(BUILD_IOS_SIM) \
+		-DCMAKE_BUILD_TYPE=Debug \
+		-DQT_HOST_PATH=$(QT_DIR) \
+		-DCMAKE_OSX_SYSROOT=iphonesimulator \
+		-DCMAKE_OSX_ARCHITECTURES=arm64
+	@echo ""
+	@echo "Xcode project: $(BUILD_IOS_SIM)/Squared.xcodeproj"
+
+ios-sim: ios-sim-configure
+	$(CMAKE) --build $(BUILD_IOS_SIM) --config Debug -- \
+		-sdk iphonesimulator -allowProvisioningUpdates
+	@echo ""
+	@echo "Run in simulator: open $(BUILD_IOS_SIM)/src/Debug-iphonesimulator/Squared.app --simulator"
+
 ipa: ios
 	@mkdir -p dist/ios
 	@echo "Creating archive..."
@@ -432,7 +454,7 @@ ipa: ios
 	@echo "IPA: $$(ls dist/ios/Squared.ipa 2>/dev/null)"
 
 ios-clean:
-	rm -rf $(BUILD_IOS) dist/ios
+	rm -rf $(BUILD_IOS) $(BUILD_IOS_SIM) dist/ios
 
 # ============================================================================
 # Utilities
@@ -441,7 +463,7 @@ ios-clean:
 .PHONY: clean distclean
 
 clean:
-	rm -rf $(BUILD_DIR) $(BUILD_REL_DIR) $(BUILD_ANDROID) $(BUILD_IOS) $(INSTALL_DIR) $(DIST_DIR) dist/macos dist/ios AppDir
+	rm -rf $(BUILD_DIR) $(BUILD_REL_DIR) $(BUILD_ANDROID) $(BUILD_IOS) $(BUILD_IOS_SIM) $(INSTALL_DIR) $(DIST_DIR) dist/macos dist/ios AppDir
 
 help:
 	@echo "Desktop:"
@@ -467,7 +489,8 @@ help:
 	@echo "  make codesign     Re-sign existing app bundle"
 	@echo ""
 	@echo "iOS:"
-	@echo "  make ios            Build iOS .app (Xcode required)"
+	@echo "  make ios            Build iOS .app for device (needs signing)"
+	@echo "  make ios-sim        Build + run in iOS Simulator"
 	@echo "  make ipa            Archive + export signed .ipa"
 	@echo "  make ios-clean      Remove iOS build + dist"
 	@echo ""
