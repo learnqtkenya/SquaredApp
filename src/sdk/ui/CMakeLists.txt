@@ -49,9 +49,11 @@ qt_target_qml_sources(SquaredUI
         ComponentGallery.qml
 )
 
-# ComponentGallery launcher executable
-qt_add_executable(ComponentGallery gallery_main.cpp)
-target_link_libraries(ComponentGallery PRIVATE
-    Qt6::Quick
-    SquaredUIplugin
-)
+# ComponentGallery launcher executable (desktop only)
+if(NOT ANDROID AND NOT IOS)
+    qt_add_executable(ComponentGallery gallery_main.cpp)
+    target_link_libraries(ComponentGallery PRIVATE
+        Qt6::Quick
+        SquaredUIplugin
+    )
+endif()
