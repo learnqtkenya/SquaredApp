@@ -25,6 +25,7 @@ QT_VERSION   ?= 6.10.2
 
 ifeq ($(OS),Windows_NT)
     QT_DIR       ?= C:/Qt/$(QT_VERSION)/msvc2022_64
+    QT_ROOT      ?= C:/Qt
     SHELL        := cmd.exe
     NPROC        := $(NUMBER_OF_PROCESSORS)
     PLATFORM     := windows
@@ -32,14 +33,37 @@ else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Darwin)
         QT_DIR   ?= $(HOME)/Qt/$(QT_VERSION)/macos
+        QT_ROOT  ?= $(HOME)/Qt
         NPROC    := $(shell sysctl -n hw.logicalcpu)
         PLATFORM := macos
     else
         QT_DIR   ?= /opt/Qt/$(QT_VERSION)/gcc_64
+        QT_ROOT  ?= /opt/Qt
         NPROC    := $(shell nproc --ignore=2)
         PLATFORM := linux
     endif
 endif
+
+# --- Qt-bundled tools (cmake, ninja, cpack) ---
+# Qt ships CMake and Ninja under QT_ROOT/Tools/. Use these instead of
+# requiring system-installed cmake/ninja.
+ifeq ($(UNAME_S),Darwin)
+    QT_CMAKE_DIR ?= $(QT_ROOT)/Tools/CMake/CMake.app/Contents/bin
+    QT_NINJA_DIR ?= $(QT_ROOT)/Tools/Ninja
+else ifeq ($(OS),Windows_NT)
+    QT_CMAKE_DIR ?= $(QT_ROOT)/Tools/CMake_64/bin
+    QT_NINJA_DIR ?= $(QT_ROOT)/Tools/Ninja
+else
+    QT_CMAKE_DIR ?= $(QT_ROOT)/Tools/CMake/bin
+    QT_NINJA_DIR ?= $(QT_ROOT)/Tools/Ninja
+endif
+
+CMAKE := $(QT_CMAKE_DIR)/cmake
+CPACK := $(QT_CMAKE_DIR)/cpack
+NINJA := $(QT_NINJA_DIR)/ninja
+
+# Also export PATH so child processes (Gradle, qt-cmake) find them
+export PATH := $(QT_CMAKE_DIR):$(QT_NINJA_DIR):$(PATH)
 
 # --- Android SDK (override via env) ---
 JAVA_HOME        ?= $(HOME)/Android/jdk-17
@@ -67,31 +91,35 @@ DIST_DIR         := dist/android
 all: build
 
 configure:
-	cmake -G Ninja -B $(BUILD_DIR) \
+	$(CMAKE) -G Ninja -B $(BUILD_DIR) \
+		-DCMAKE_MAKE_PROGRAM=$(NINJA) \
 		-DCMAKE_PREFIX_PATH=$(QT_DIR) \
 		-DCMAKE_BUILD_TYPE=Debug
 
 build: configure
-	cmake --build $(BUILD_DIR) --target Squared --parallel $(NPROC)
+	$(CMAKE) --build $(BUILD_DIR) --target Squared --parallel $(NPROC)
 
 configure-release:
-	cmake -G Ninja -B $(BUILD_REL_DIR) \
+	$(CMAKE) -G Ninja -B $(BUILD_REL_DIR) \
+		-DCMAKE_MAKE_PROGRAM=$(NINJA) \
 		-DCMAKE_PREFIX_PATH=$(QT_DIR) \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_INSTALL_PREFIX=$(INSTALL_DIR)
 
 release: configure-release
-	cmake --build $(BUILD_REL_DIR) --target Squared --parallel $(NPROC)
+	$(CMAKE) --build $(BUILD_REL_DIR) --target Squared --parallel $(NPROC)
+
+CTEST := $(QT_CMAKE_DIR)/ctest
 
 test: build
 ifeq ($(OS),Windows_NT)
-	ctest --test-dir $(BUILD_DIR) --output-on-failure
+	$(CTEST) --test-dir $(BUILD_DIR) --output-on-failure
 else
-	QT_QPA_PLATFORM=offscreen ctest --test-dir $(BUILD_DIR) --output-on-failure
+	QT_QPA_PLATFORM=offscreen $(CTEST) --test-dir $(BUILD_DIR) --output-on-failure
 endif
 
 install: release
-	cmake --install $(BUILD_REL_DIR)
+	$(CMAKE) --install $(BUILD_REL_DIR)
 
 run: build
 ifdef APP
@@ -133,6 +161,7 @@ android-check:
 android-configure: android-check
 	$(QT_ANDROID)/bin/qt-cmake \
 		-G Ninja \
+		-DCMAKE_MAKE_PROGRAM=$(NINJA) \
 		-S . \
 		-B $(BUILD_ANDROID) \
 		-DCMAKE_BUILD_TYPE=MinSizeRel \
@@ -152,7 +181,7 @@ android-configure: android-check
 android: apk aab
 
 apk: android-configure
-	cmake --build $(BUILD_ANDROID) --target apk --parallel $(NPROC)
+	$(CMAKE) --build $(BUILD_ANDROID) --target apk --parallel $(NPROC)
 	@mkdir -p $(DIST_DIR)
 	@# Sign if keystore exists, otherwise just copy unsigned
 	@APK=$$(find $(ANDROID_BUILD_OUT) -name '*.apk' -path '*/release/*' | head -1); \
@@ -176,7 +205,7 @@ apk: android-configure
 	fi
 
 aab: android-configure
-	cmake --build $(BUILD_ANDROID) --target aab --parallel $(NPROC)
+	$(CMAKE) --build $(BUILD_ANDROID) --target aab --parallel $(NPROC)
 	@mkdir -p $(DIST_DIR)
 	@AAB=$$(find $(ANDROID_BUILD_OUT) -name '*.aab' -path '*/release/*' | head -1); \
 	if [ -z "$$AAB" ]; then echo "Error: AAB not found in build output"; exit 1; fi; \
@@ -198,12 +227,13 @@ aab: android-configure
 apk-debug: android-check
 	$(QT_ANDROID)/bin/qt-cmake \
 		-G Ninja \
+		-DCMAKE_MAKE_PROGRAM=$(NINJA) \
 		-S . \
 		-B $(BUILD_ANDROID) \
 		-DCMAKE_BUILD_TYPE=Debug \
 		-DQT_HOST_PATH=$(QT_DIR) \
 		-DANDROID_SDK_ROOT=$(ANDROID_HOME)
-	cmake --build $(BUILD_ANDROID) --target apk --parallel $(NPROC)
+	$(CMAKE) --build $(BUILD_ANDROID) --target apk --parallel $(NPROC)
 	@mkdir -p $(DIST_DIR)
 	@APK=$$(find $(ANDROID_BUILD_OUT) -name '*.apk' -path '*/debug/*' | head -1); \
 	if [ -n "$$APK" ]; then \
@@ -286,7 +316,7 @@ appimage: install $(LINUXDEPLOY)
 
 deb: install
 	@echo "Building DEB package..."
-	cd $(BUILD_REL_DIR) && cpack -G DEB
+	cd $(BUILD_REL_DIR) && $(CPACK) -G DEB
 	@echo ""
 	@echo "DEB: $$(find $(BUILD_REL_DIR) -name '*.deb' | head -1)"
 
@@ -300,13 +330,13 @@ package-linux: deb appimage
 
 portable: install
 	@echo "Building portable ZIP..."
-	cd $(BUILD_REL_DIR) && cpack -G ZIP
+	cd $(BUILD_REL_DIR) && $(CPACK) -G ZIP
 	@echo ""
 	@echo "ZIP: $$(find $(BUILD_REL_DIR) -name '*.zip' | head -1)"
 
 installer: install
 	@echo "Building NSIS installer..."
-	cd $(BUILD_REL_DIR) && cpack -G NSIS
+	cd $(BUILD_REL_DIR) && $(CPACK) -G NSIS
 	@echo ""
 	@echo "Installer: $$(find $(BUILD_REL_DIR) -name '*.exe' | head -1)"
 
@@ -358,7 +388,7 @@ ios-configure: ios-check
 	@echo "Open in Xcode to configure signing team and provisioning profile."
 
 ios: ios-configure
-	cmake --build $(BUILD_IOS) --config Release -- -allowProvisioningUpdates
+	$(CMAKE) --build $(BUILD_IOS) --config Release -- -allowProvisioningUpdates
 	@echo ""
 	@echo "iOS app built: $$(find $(BUILD_IOS) -name 'Squared.app' -path '*/Release-*' | head -1)"
 
