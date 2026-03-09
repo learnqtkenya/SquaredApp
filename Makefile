@@ -5,10 +5,11 @@
 #   make release          # Build desktop (release)
 #   make test             # Run tests headlessly
 #   make install          # Install desktop binary + Qt libs
-#   make android          # Build Android APK + AAB (release)
-#   make apk              # Build Android APK only
-#   make aab              # Build Android AAB only
+#   make android          # Build Android APK + AAB (signed)
+#   make apk              # Build signed APK only
+#   make aab              # Build signed AAB only
 #   make apk-debug        # Build debug APK (no signing)
+#   make create-keystore  # Generate Android release keystore
 #   make clean            # Remove all build directories
 #   make run APP=my-app   # Run app in dev mode
 #
@@ -102,9 +103,25 @@ export JAVA_HOME
 export ANDROID_HOME
 export ANDROID_NDK_ROOT
 
-.PHONY: android apk aab apk-debug android-configure
+# NDK toolchain on PATH so Gradle's strip task can find llvm-strip
+NDK_TOOLCHAIN := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64/bin
+export PATH := $(JAVA_HOME)/bin:$(NDK_TOOLCHAIN):$(PATH)
 
-android-configure:
+# Signing
+KEYSTORE_DIR     ?= $(HOME)/.android-keystore
+KEYSTORE_FILE    := $(KEYSTORE_DIR)/release.keystore
+KEYSTORE_ALIAS   := squared-release
+ANDROID_BUILD_OUT := $(BUILD_ANDROID)/src/android-build
+
+.PHONY: android apk aab apk-debug android-configure android-clean android-check create-keystore
+
+android-check:
+	@test -d "$(QT_ANDROID)" || (echo "Error: Qt Android not found at $(QT_ANDROID)" && exit 1)
+	@test -x "$(JAVA_HOME)/bin/javac" || (echo "Error: JDK not found at $(JAVA_HOME)" && exit 1)
+	@test -d "$(ANDROID_HOME)" || (echo "Error: Android SDK not found at $(ANDROID_HOME)" && exit 1)
+	@test -d "$(ANDROID_NDK_ROOT)" || (echo "Error: Android NDK not found at $(ANDROID_NDK_ROOT)" && exit 1)
+
+android-configure: android-check
 	$(QT_ANDROID)/bin/qt-cmake \
 		-G Ninja \
 		-S . \
@@ -127,15 +144,49 @@ android: apk aab
 
 apk: android-configure
 	cmake --build $(BUILD_ANDROID) --target apk --parallel $(NPROC)
-	@echo ""
-	@echo "APK: $$(find $(BUILD_ANDROID)/src/android-build -name '*.apk' -path '*/release/*' | head -1)"
+	@mkdir -p $(DIST_DIR)
+	@# Sign if keystore exists, otherwise just copy unsigned
+	@APK=$$(find $(ANDROID_BUILD_OUT) -name '*.apk' -path '*/release/*' | head -1); \
+	if [ -z "$$APK" ]; then echo "Error: APK not found in build output"; exit 1; fi; \
+	if [ -f "$(KEYSTORE_FILE)" ] && [ -f "$(KEYSTORE_DIR)/signing.env" ]; then \
+		. $(KEYSTORE_DIR)/signing.env; \
+		BT=$$(ls -v $(ANDROID_HOME)/build-tools | tail -1); \
+		echo "Aligning APK..."; \
+		$(ANDROID_HOME)/build-tools/$$BT/zipalign -f -p 4 "$$APK" "$(DIST_DIR)/squared-release.tmp"; \
+		echo "Signing APK..."; \
+		$(ANDROID_HOME)/build-tools/$$BT/apksigner sign \
+			--ks $(KEYSTORE_FILE) --ks-key-alias $(KEYSTORE_ALIAS) \
+			--ks-pass "pass:$$STORE_PASSWORD" --key-pass "pass:$$KEY_PASSWORD" \
+			--out $(DIST_DIR)/squared-release.apk $(DIST_DIR)/squared-release.tmp; \
+		rm -f $(DIST_DIR)/squared-release.tmp; \
+		$(ANDROID_HOME)/build-tools/$$BT/apksigner verify --print-certs $(DIST_DIR)/squared-release.apk > /dev/null; \
+		echo "Signed APK: $(DIST_DIR)/squared-release.apk ($$(du -h $(DIST_DIR)/squared-release.apk | cut -f1))"; \
+	else \
+		cp "$$APK" $(DIST_DIR)/squared-unsigned.apk; \
+		echo "Unsigned APK: $(DIST_DIR)/squared-unsigned.apk (no keystore — run: make create-keystore)"; \
+	fi
 
 aab: android-configure
 	cmake --build $(BUILD_ANDROID) --target aab --parallel $(NPROC)
-	@echo ""
-	@echo "AAB: $$(find $(BUILD_ANDROID)/src/android-build -name '*.aab' -path '*/release/*' | head -1)"
+	@mkdir -p $(DIST_DIR)
+	@AAB=$$(find $(ANDROID_BUILD_OUT) -name '*.aab' -path '*/release/*' | head -1); \
+	if [ -z "$$AAB" ]; then echo "Error: AAB not found in build output"; exit 1; fi; \
+	if [ -f "$(KEYSTORE_FILE)" ] && [ -f "$(KEYSTORE_DIR)/signing.env" ]; then \
+		. $(KEYSTORE_DIR)/signing.env; \
+		echo "Signing AAB..."; \
+		cp "$$AAB" $(DIST_DIR)/squared-release.aab; \
+		jarsigner -keystore $(KEYSTORE_FILE) \
+			-storepass "$$STORE_PASSWORD" -keypass "$$KEY_PASSWORD" \
+			-sigalg SHA256withRSA -digestalg SHA-256 \
+			$(DIST_DIR)/squared-release.aab $(KEYSTORE_ALIAS); \
+		jarsigner -verify $(DIST_DIR)/squared-release.aab > /dev/null; \
+		echo "Signed AAB: $(DIST_DIR)/squared-release.aab ($$(du -h $(DIST_DIR)/squared-release.aab | cut -f1))"; \
+	else \
+		cp "$$AAB" $(DIST_DIR)/squared-unsigned.aab; \
+		echo "Unsigned AAB: $(DIST_DIR)/squared-unsigned.aab (no keystore — run: make create-keystore)"; \
+	fi
 
-apk-debug:
+apk-debug: android-check
 	$(QT_ANDROID)/bin/qt-cmake \
 		-G Ninja \
 		-S . \
@@ -144,8 +195,34 @@ apk-debug:
 		-DQT_HOST_PATH=$(QT_DIR) \
 		-DANDROID_SDK_ROOT=$(ANDROID_HOME)
 	cmake --build $(BUILD_ANDROID) --target apk --parallel $(NPROC)
-	@echo ""
-	@echo "Debug APK: $$(find $(BUILD_ANDROID)/src/android-build -name '*.apk' -path '*/debug/*' | head -1)"
+	@mkdir -p $(DIST_DIR)
+	@APK=$$(find $(ANDROID_BUILD_OUT) -name '*.apk' -path '*/debug/*' | head -1); \
+	if [ -n "$$APK" ]; then \
+		cp "$$APK" $(DIST_DIR)/squared-debug.apk; \
+		echo "Debug APK: $(DIST_DIR)/squared-debug.apk ($$(du -h $(DIST_DIR)/squared-debug.apk | cut -f1))"; \
+	fi
+
+android-clean:
+	rm -rf $(BUILD_ANDROID) $(DIST_DIR)
+
+create-keystore:
+	@mkdir -p $(KEYSTORE_DIR)
+	@read -rp "Your name: " CN; \
+	read -rp "Organization: " ORG; \
+	read -rp "Country code (e.g. KE): " COUNTRY; \
+	read -rsp "Store password: " STORE_PW; echo; \
+	read -rsp "Key password (enter = same): " KEY_PW; echo; \
+	KEY_PW=$${KEY_PW:-$$STORE_PW}; \
+	keytool -genkeypair \
+		-keystore $(KEYSTORE_FILE) -alias $(KEYSTORE_ALIAS) \
+		-keyalg RSA -keysize 2048 -validity 10000 \
+		-storepass "$$STORE_PW" -keypass "$$KEY_PW" \
+		-dname "CN=$$CN, O=$$ORG, C=$$COUNTRY"; \
+	printf 'STORE_PASSWORD=%s\nKEY_PASSWORD=%s\nKEYSTORE_ALIAS=%s\n' \
+		"$$STORE_PW" "$$KEY_PW" "$(KEYSTORE_ALIAS)" > $(KEYSTORE_DIR)/signing.env; \
+	chmod 600 $(KEYSTORE_FILE) $(KEYSTORE_DIR)/signing.env; \
+	echo "Keystore created at $(KEYSTORE_FILE)"; \
+	echo "Credentials saved to $(KEYSTORE_DIR)/signing.env"
 
 # ============================================================================
 # Linux packaging targets
@@ -236,10 +313,12 @@ help:
 	@echo "  make package-windows  Build both"
 	@echo ""
 	@echo "Android:"
-	@echo "  make android      Build APK + AAB (release)"
-	@echo "  make apk          Build APK only"
-	@echo "  make aab          Build AAB only"
-	@echo "  make apk-debug    Build debug APK"
+	@echo "  make android        Build signed APK + AAB"
+	@echo "  make apk            Build signed APK"
+	@echo "  make aab            Build signed AAB"
+	@echo "  make apk-debug      Build debug APK (no signing)"
+	@echo "  make create-keystore  Generate release keystore"
+	@echo "  make android-clean  Remove Android build + dist"
 	@echo ""
 	@echo "Other:"
 	@echo "  make clean        Remove all build dirs"
