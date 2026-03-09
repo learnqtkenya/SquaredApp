@@ -79,7 +79,7 @@ add_subdirectory(src/sdk/api)
 add_subdirectory(src/core)
 add_subdirectory(src)
 
-if(NOT ANDROID)
+if(NOT ANDROID AND NOT IOS)
     enable_testing()
     add_subdirectory(tests)
 

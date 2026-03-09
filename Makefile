@@ -402,13 +402,15 @@ ios-configure: ios-check
 		-B $(BUILD_IOS) \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DQT_HOST_PATH=$(QT_DIR) \
-		-DCMAKE_OSX_ARCHITECTURES=arm64
+		-DCMAKE_OSX_ARCHITECTURES=arm64 \
+		$(if $(DEVELOPMENT_TEAM),-DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=$(DEVELOPMENT_TEAM))
 	@echo ""
 	@echo "Xcode project: $(BUILD_IOS)/Squared.xcodeproj"
-	@echo "Open in Xcode to configure signing team and provisioning profile."
 
 ios: ios-configure
-	$(CMAKE) --build $(BUILD_IOS) --config Release -- -allowProvisioningUpdates
+	$(CMAKE) --build $(BUILD_IOS) --config Release -- \
+		-allowProvisioningUpdates \
+		$(if $(DEVELOPMENT_TEAM),DEVELOPMENT_TEAM=$(DEVELOPMENT_TEAM))
 	@echo ""
 	@echo "iOS app built: $$(find $(BUILD_IOS) -name 'Squared.app' -path '*/Release-*' | head -1)"
 
