@@ -425,16 +425,16 @@ ios-sim-configure: ios-check
 		-B $(BUILD_IOS_SIM) \
 		-DCMAKE_BUILD_TYPE=Debug \
 		-DQT_HOST_PATH=$(QT_DIR) \
-		-DCMAKE_OSX_SYSROOT=iphonesimulator \
+		-DQT_APPLE_SDK=iphonesimulator \
 		-DCMAKE_OSX_ARCHITECTURES=arm64
 	@echo ""
 	@echo "Xcode project: $(BUILD_IOS_SIM)/Squared.xcodeproj"
 
 ios-sim: ios-sim-configure
-	$(CMAKE) --build $(BUILD_IOS_SIM) --config Debug -- \
-		-sdk iphonesimulator -allowProvisioningUpdates
+	$(CMAKE) --build $(BUILD_IOS_SIM) --config Debug
 	@echo ""
-	@echo "Run in simulator: open $(BUILD_IOS_SIM)/src/Debug-iphonesimulator/Squared.app --simulator"
+	@echo "Launch: xcrun simctl boot 'iPhone 16' 2>/dev/null; open -a Simulator"
+	@echo "Install: xcrun simctl install booted $(BUILD_IOS_SIM)/src/Debug-iphonesimulator/Squared.app"
 
 ipa: ios
 	@mkdir -p dist/ios
