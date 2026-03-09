@@ -52,6 +52,33 @@ target_link_libraries(Squared PRIVATE
 
 target_include_directories(Squared PRIVATE ${CONFIG_INCLUDE_DIR})
 
+# --- Android configuration ---
+if(ANDROID)
+    set_target_properties(Squared PROPERTIES
+        QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android"
+        QT_ANDROID_TARGET_SDK_VERSION 34
+        QT_ANDROID_MIN_SDK_VERSION 26
+        QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
+        QT_ANDROID_VERSION_CODE "${ANDROID_VERSION_CODE}"
+    )
+
+    # Copy mipmap icons into android-build/res/ — androiddeployqt doesn't
+    # always merge custom res/ subdirectories from the package source dir.
+    add_custom_command(TARGET Squared POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/android/res"
+            "${CMAKE_BINARY_DIR}/src/android-build/res"
+        COMMENT "Copying Android resources (icons) to android-build/res/"
+    )
+
+    # Bundle OpenSSL libs if found (set up in root CMakeLists.txt)
+    if(ANDROID_EXTRA_LIBS)
+        set_target_properties(Squared PROPERTIES
+            QT_ANDROID_EXTRA_LIBS "${ANDROID_EXTRA_LIBS}"
+        )
+    endif()
+endif()
+
 # --- Desktop install (not applicable for Android) ---
 if(NOT ANDROID)
     install(TARGETS Squared
