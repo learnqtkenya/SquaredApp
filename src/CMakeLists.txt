@@ -3,6 +3,29 @@ qt_add_executable(Squared main.cpp)
 # --- Platform icons ---
 if(WIN32)
     target_sources(Squared PRIVATE ${CMAKE_SOURCE_DIR}/assets/icons/squared.rc)
+elseif(IOS)
+    set_target_properties(Squared PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "Squared"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.squared.app"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+        XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "16.0"
+        XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+    )
+    if(EXISTS "${CMAKE_SOURCE_DIR}/ios/Assets.xcassets")
+        target_sources(Squared PRIVATE "${CMAKE_SOURCE_DIR}/ios/Assets.xcassets")
+        set_source_files_properties("${CMAKE_SOURCE_DIR}/ios/Assets.xcassets"
+            PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    endif()
+    if(EXISTS "${CMAKE_SOURCE_DIR}/ios/LaunchScreen.storyboard")
+        target_sources(Squared PRIVATE "${CMAKE_SOURCE_DIR}/ios/LaunchScreen.storyboard")
+        set_source_files_properties("${CMAKE_SOURCE_DIR}/ios/LaunchScreen.storyboard"
+            PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+        set_target_properties(Squared PROPERTIES
+            XCODE_ATTRIBUTE_INFOPLIST_KEY_UILaunchStoryboardName "LaunchScreen")
+    endif()
 elseif(APPLE AND NOT ANDROID)
     set_target_properties(Squared PROPERTIES
         MACOSX_BUNDLE TRUE

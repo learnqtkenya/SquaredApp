@@ -53,14 +53,6 @@ add_subdirectory(external/qtkeychain EXCLUDE_FROM_ALL)
 
 add_subdirectory(config)
 
-add_subdirectory(src/sdk/ui)
-add_subdirectory(src/sdk/storage)
-add_subdirectory(src/sdk/core)
-add_subdirectory(src/sdk/network)
-add_subdirectory(src/sdk/api)
-add_subdirectory(src/core)
-add_subdirectory(src)
-
 if(ANDROID)
     # Version code: MAJOR * 10000 + MINOR * 100 + PATCH (e.g., 0.1.0 → 100)
     math(EXPR ANDROID_VERSION_CODE
@@ -78,6 +70,14 @@ if(ANDROID)
             "Clone https://github.com/KDAB/android_openssl into $ANDROID_HOME/android_openssl")
     endif()
 endif()
+
+add_subdirectory(src/sdk/ui)
+add_subdirectory(src/sdk/storage)
+add_subdirectory(src/sdk/core)
+add_subdirectory(src/sdk/network)
+add_subdirectory(src/sdk/api)
+add_subdirectory(src/core)
+add_subdirectory(src)
 
 if(NOT ANDROID)
     enable_testing()
@@ -112,6 +112,12 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxcb1, libxkbcommon0, libgl1, libegl1, libfontconfig1, libdbus-1-3")
     set(CPACK_DEBIAN_PACKAGE_DESCRIPTION
         "Squared is a runtime and distribution platform for QML applications.\n Discover, install, and run QML apps inside a single host environment.")
+
+    include(CPack)
+elseif(APPLE AND NOT IOS)
+    set(CPACK_GENERATOR "DragNDrop")
+    set(CPACK_DMG_VOLUME_NAME "Squared")
+    set(CPACK_BUNDLE_NAME "Squared")
 
     include(CPack)
 elseif(WIN32)

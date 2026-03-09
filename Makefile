@@ -9,6 +9,9 @@
 #   make apk              # Build signed APK only
 #   make aab              # Build signed AAB only
 #   make apk-debug        # Build debug APK (no signing)
+#   make dmg              # Build macOS .dmg disk image
+#   make ios              # Build iOS .app (open Xcode for signing)
+#   make ipa              # Build signed .ipa for distribution
 #   make create-keystore  # Generate Android release keystore
 #   make clean            # Remove all build directories
 #   make run APP=my-app   # Run app in dev mode
@@ -44,10 +47,14 @@ ANDROID_HOME     ?= $(HOME)/Android/Sdk
 ANDROID_NDK_ROOT ?= $(HOME)/Android/android-ndk-r27d
 QT_ANDROID       ?= /opt/Qt/$(QT_VERSION)/android_arm64_v8a
 
+# --- iOS SDK (override via env) ---
+QT_IOS           ?= $(HOME)/Qt/$(QT_VERSION)/ios
+
 # --- Directories ---
 BUILD_DIR        := build
 BUILD_REL_DIR    := build-release
 BUILD_ANDROID    := build-android
+BUILD_IOS        := build-ios
 INSTALL_DIR      := install
 DIST_DIR         := dist/android
 
@@ -306,13 +313,83 @@ installer: install
 package-windows: portable installer
 
 # ============================================================================
+# macOS packaging targets
+# ============================================================================
+
+MACDEPLOYQT      := $(QT_DIR)/bin/macdeployqt
+
+.PHONY: dmg package-macos
+
+dmg: install
+	@echo "Creating macOS .app bundle..."
+	$(MACDEPLOYQT) $(INSTALL_DIR)/Squared.app -qmldir=qml -verbose=1
+	@echo "Creating DMG..."
+	@mkdir -p dist/macos
+	@hdiutil create -volname "Squared" -srcfolder $(INSTALL_DIR)/Squared.app \
+		-ov -format UDZO dist/macos/Squared-$(shell grep 'VERSION ' CMakeLists.txt | head -1 | sed 's/.*VERSION //' | sed 's/ .*//').dmg
+	@echo ""
+	@echo "DMG: $$(ls dist/macos/Squared-*.dmg 2>/dev/null | head -1)"
+
+package-macos: dmg
+
+# ============================================================================
+# iOS targets
+# ============================================================================
+
+IOS_BUNDLE_ID    ?= com.squared.app
+IOS_TEAM_ID      ?= $(DEVELOPMENT_TEAM)
+
+.PHONY: ios-check ios-configure ios ipa ios-clean
+
+ios-check:
+	@test -d "$(QT_IOS)" || (echo "Error: Qt iOS not found at $(QT_IOS). Install via Qt Maintenance Tool." && exit 1)
+	@which xcodebuild > /dev/null 2>&1 || (echo "Error: Xcode command line tools not found" && exit 1)
+
+ios-configure: ios-check
+	$(QT_IOS)/bin/qt-cmake \
+		-G Xcode \
+		-S . \
+		-B $(BUILD_IOS) \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DQT_HOST_PATH=$(QT_DIR) \
+		-DCMAKE_OSX_ARCHITECTURES=arm64
+	@echo ""
+	@echo "Xcode project: $(BUILD_IOS)/Squared.xcodeproj"
+	@echo "Open in Xcode to configure signing team and provisioning profile."
+
+ios: ios-configure
+	cmake --build $(BUILD_IOS) --config Release -- -allowProvisioningUpdates
+	@echo ""
+	@echo "iOS app built: $$(find $(BUILD_IOS) -name 'Squared.app' -path '*/Release-*' | head -1)"
+
+ipa: ios
+	@mkdir -p dist/ios
+	@echo "Creating archive..."
+	@cd $(BUILD_IOS) && xcodebuild -project Squared.xcodeproj \
+		-scheme Squared -configuration Release \
+		-archivePath $(CURDIR)/dist/ios/Squared.xcarchive \
+		-destination 'generic/platform=iOS' \
+		archive -allowProvisioningUpdates
+	@echo "Exporting IPA..."
+	@xcodebuild -exportArchive \
+		-archivePath $(CURDIR)/dist/ios/Squared.xcarchive \
+		-exportOptionsPlist ios/ExportOptions.plist \
+		-exportPath $(CURDIR)/dist/ios \
+		-allowProvisioningUpdates
+	@echo ""
+	@echo "IPA: $$(ls dist/ios/Squared.ipa 2>/dev/null)"
+
+ios-clean:
+	rm -rf $(BUILD_IOS) dist/ios
+
+# ============================================================================
 # Utilities
 # ============================================================================
 
 .PHONY: clean distclean
 
 clean:
-	rm -rf $(BUILD_DIR) $(BUILD_REL_DIR) $(BUILD_ANDROID) $(INSTALL_DIR) $(DIST_DIR) AppDir
+	rm -rf $(BUILD_DIR) $(BUILD_REL_DIR) $(BUILD_ANDROID) $(BUILD_IOS) $(INSTALL_DIR) $(DIST_DIR) dist/macos dist/ios AppDir
 
 help:
 	@echo "Desktop:"
@@ -331,6 +408,14 @@ help:
 	@echo "  make portable     Build portable ZIP"
 	@echo "  make installer    Build NSIS installer"
 	@echo "  make package-windows  Build both"
+	@echo ""
+	@echo "macOS packaging:"
+	@echo "  make dmg          Build .dmg disk image"
+	@echo ""
+	@echo "iOS:"
+	@echo "  make ios            Build iOS .app (Xcode required)"
+	@echo "  make ipa            Archive + export signed .ipa"
+	@echo "  make ios-clean      Remove iOS build + dist"
 	@echo ""
 	@echo "Android:"
 	@echo "  make android        Build signed APK + AAB"
@@ -351,4 +436,5 @@ help:
 	@echo "Override paths:"
 	@echo "  QT_DIR=$(QT_DIR)"
 	@echo "  QT_ANDROID=$(QT_ANDROID)"
+	@echo "  QT_IOS=$(QT_IOS)"
 	@echo "  JAVA_HOME=$(JAVA_HOME)"
