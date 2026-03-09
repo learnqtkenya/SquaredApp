@@ -418,14 +418,14 @@ ios: ios-configure
 	@echo "iOS app built: $$(find $(BUILD_IOS) -name 'Squared.app' -path '*/Release-*' | head -1)"
 
 # --- Simulator build (no signing required) ---
+# Use cmake directly with explicit toolchain (not qt-cmake, which forces iphoneos).
 ios-sim-configure: ios-check
-	$(QT_IOS)/bin/qt-cmake \
+	$(CMAKE) \
 		-G Xcode \
 		-S . \
 		-B $(BUILD_IOS_SIM) \
-		-DCMAKE_BUILD_TYPE=Debug \
-		-DQT_HOST_PATH=$(QT_DIR) \
-		-DQT_APPLE_SDK=iphonesimulator \
+		-DCMAKE_TOOLCHAIN_FILE=$(QT_IOS)/lib/cmake/Qt6/qt.toolchain.cmake \
+		-DCMAKE_OSX_SYSROOT=iphonesimulator \
 		-DCMAKE_OSX_ARCHITECTURES=arm64
 	@echo ""
 	@echo "Xcode project: $(BUILD_IOS_SIM)/Squared.xcodeproj"
