@@ -1,0 +1,13 @@
+[Unit]
+Description=Squared App
+After=multi-user.target
+
+[Service]
+ExecStart=/opt/squared/run.sh
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
