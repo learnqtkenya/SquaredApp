@@ -88,6 +88,27 @@ elseif(APPLE AND NOT IOS)
     set(CPACK_GENERATOR "DragNDrop")
     set(CPACK_DMG_VOLUME_NAME "Squared")
     set(CPACK_BUNDLE_NAME "Squared")
+elseif(WIN32)
+    set(CPACK_PACKAGE_NAME "Squared")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "Squared")
+    set(CPACK_PACKAGE_EXECUTABLES "Squared;Squared")
+
+    set(CPACK_GENERATOR "NSIS;ZIP")
+    set(CPACK_NSIS_DISPLAY_NAME "Squared")
+    set(CPACK_NSIS_PACKAGE_NAME "Squared")
+    set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/assets/icons/squared.ico")
+    set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/assets/icons/squared.ico")
+    set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\Squared.exe")
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+    set(CPACK_NSIS_MODIFY_PATH OFF)
+
+    # Start Menu + Desktop shortcuts
+    set(CPACK_NSIS_CREATE_ICONS_EXTRA
+        "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Squared.lnk' '$INSTDIR\\\\bin\\\\Squared.exe'
+         CreateShortCut '$DESKTOP\\\\Squared.lnk' '$INSTDIR\\\\bin\\\\Squared.exe'")
+    set(CPACK_NSIS_DELETE_ICONS_EXTRA
+        "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Squared.lnk'
+         Delete '$DESKTOP\\\\Squared.lnk'")
 endif()
 
 include(CPack)
