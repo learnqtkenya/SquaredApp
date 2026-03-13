@@ -35,8 +35,10 @@ target_link_libraries(Squared PRIVATE
 
 target_include_directories(Squared PRIVATE ${CONFIG_INCLUDE_DIR})
 
-# --- macOS app bundle ---
-if(APPLE AND NOT ANDROID)
+# --- Platform icons ---
+if(WIN32)
+    target_sources(Squared PRIVATE ${CMAKE_SOURCE_DIR}/assets/icons/squared.rc)
+elseif(APPLE AND NOT ANDROID)
     set_target_properties(Squared PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_ICON_FILE squared.icns
