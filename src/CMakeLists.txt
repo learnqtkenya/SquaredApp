@@ -52,15 +52,43 @@ elseif(APPLE AND NOT ANDROID)
     target_sources(Squared PRIVATE ${MACOS_ICON})
 endif()
 
-# --- Install rules ---
-install(TARGETS Squared
-    BUNDLE  DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+# --- Android configuration ---
+if(ANDROID)
+    set_target_properties(Squared PROPERTIES
+        QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/android"
+        QT_ANDROID_TARGET_SDK_VERSION 34
+        QT_ANDROID_MIN_SDK_VERSION 26
+        QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
+        QT_ANDROID_VERSION_CODE "${ANDROID_VERSION_CODE}"
+    )
 
-qt_generate_deploy_qml_app_script(
-    TARGET Squared
-    OUTPUT_SCRIPT deploy_script
-    NO_UNSUPPORTED_PLATFORM_ERROR
-)
-install(SCRIPT ${deploy_script})
+    # Copy mipmap icons into android-build/res/
+    add_custom_command(TARGET Squared POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/android/res"
+            "${CMAKE_BINARY_DIR}/src/android-build/res"
+        COMMENT "Copying Android resources (icons) to android-build/res/"
+    )
+
+    # Bundle OpenSSL libs if found (set up in root CMakeLists.txt)
+    if(ANDROID_EXTRA_LIBS)
+        set_target_properties(Squared PROPERTIES
+            QT_ANDROID_EXTRA_LIBS "${ANDROID_EXTRA_LIBS}"
+        )
+    endif()
+endif()
+
+# --- Desktop install (not applicable for Android) ---
+if(NOT ANDROID)
+    install(TARGETS Squared
+        BUNDLE  DESTINATION .
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+
+    qt_generate_deploy_qml_app_script(
+        TARGET Squared
+        OUTPUT_SCRIPT deploy_script
+        NO_UNSUPPORTED_PLATFORM_ERROR
+    )
+    install(SCRIPT ${deploy_script})
+endif()

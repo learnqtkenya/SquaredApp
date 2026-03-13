@@ -6,9 +6,13 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 QuickTest Test Network)
-if(UNIX AND NOT APPLE)
-    find_package(Qt6 REQUIRED COMPONENTS DBus)
+if(ANDROID)
+    find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Network)
+else()
+    find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 QuickTest Test Network)
+    if(UNIX AND NOT APPLE)
+        find_package(Qt6 REQUIRED COMPONENTS DBus)
+    endif()
 endif()
 
 # CorePrivate is needed for QZipReader/QZipWriter in AppInstaller.
@@ -57,8 +61,10 @@ add_subdirectory(src/sdk/api)
 add_subdirectory(src/core)
 add_subdirectory(src)
 
-enable_testing()
-add_subdirectory(tests)
+if(NOT ANDROID)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 # --- Linux FreeDesktop integration ---
 if(UNIX AND NOT APPLE)
@@ -66,6 +72,25 @@ if(UNIX AND NOT APPLE)
         DESTINATION share/applications)
     install(DIRECTORY linux/icons/hicolor
         DESTINATION share/icons)
+endif()
+
+# --- Android configuration ---
+if(ANDROID)
+    # Version code: MAJOR * 10000 + MINOR * 100 + PATCH (e.g., 0.1.0 → 100)
+    math(EXPR ANDROID_VERSION_CODE
+        "${PROJECT_VERSION_MAJOR} * 10000 + ${PROJECT_VERSION_MINOR} * 100 + ${PROJECT_VERSION_PATCH}")
+
+    # Bundle OpenSSL for TLS/HTTPS support on Android.
+    # Qt on Android requires shipping libssl and libcrypto since Android
+    # does not expose a system OpenSSL to apps.
+    set(ANDROID_OPENSSL_DIR "$ENV{ANDROID_HOME}/android_openssl"
+        CACHE PATH "Path to KDAB/android_openssl prebuilt libs")
+    if(EXISTS "${ANDROID_OPENSSL_DIR}/CMakeLists.txt")
+        include("${ANDROID_OPENSSL_DIR}/CMakeLists.txt")
+    else()
+        message(WARNING "Android OpenSSL not found at ${ANDROID_OPENSSL_DIR} — HTTPS will not work. "
+            "Clone https://github.com/KDAB/android_openssl into $ANDROID_HOME/android_openssl")
+    endif()
 endif()
 
 # --- CPack packaging ---
