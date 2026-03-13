@@ -59,3 +59,11 @@ add_subdirectory(src)
 
 enable_testing()
 add_subdirectory(tests)
+
+# --- Linux FreeDesktop integration ---
+if(UNIX AND NOT APPLE)
+    install(FILES linux/com.squared.app.desktop
+        DESTINATION share/applications)
+    install(DIRECTORY linux/icons/hicolor
+        DESTINATION share/icons)
+endif()

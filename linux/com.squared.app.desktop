@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Squared
+GenericName=QML Super App Runtime
+Comment=Discover, install, and run QML applications
+Exec=Squared %u
+Icon=com.squared.app
+Terminal=false
+Categories=Development;IDE;Qt;
+Keywords=QML;Qt;Apps;Runtime;
+StartupWMClass=Squared
+MimeType=application/x-sqapp;
