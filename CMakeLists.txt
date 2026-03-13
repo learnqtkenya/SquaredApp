@@ -84,6 +84,10 @@ if(UNIX AND NOT APPLE)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxcb1, libxkbcommon0, libgl1, libegl1, libfontconfig1, libdbus-1-3")
     set(CPACK_DEBIAN_PACKAGE_DESCRIPTION
         "Squared is a runtime and distribution platform for QML applications.\n Discover, install, and run QML apps inside a single host environment.")
-
-    include(CPack)
+elseif(APPLE AND NOT IOS)
+    set(CPACK_GENERATOR "DragNDrop")
+    set(CPACK_DMG_VOLUME_NAME "Squared")
+    set(CPACK_BUNDLE_NAME "Squared")
 endif()
+
+include(CPack)
