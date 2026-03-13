@@ -35,6 +35,21 @@ target_link_libraries(Squared PRIVATE
 
 target_include_directories(Squared PRIVATE ${CONFIG_INCLUDE_DIR})
 
+# --- macOS app bundle ---
+if(APPLE AND NOT ANDROID)
+    set_target_properties(Squared PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_ICON_FILE squared.icns
+        MACOSX_BUNDLE_BUNDLE_NAME "Squared"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.squared.app"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+    )
+    set(MACOS_ICON "${CMAKE_SOURCE_DIR}/assets/icons/squared.icns")
+    set_source_files_properties(${MACOS_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    target_sources(Squared PRIVATE ${MACOS_ICON})
+endif()
+
 # --- Install rules ---
 install(TARGETS Squared
     BUNDLE  DESTINATION .
