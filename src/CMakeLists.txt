@@ -38,7 +38,7 @@ target_include_directories(Squared PRIVATE ${CONFIG_INCLUDE_DIR})
 # --- Platform icons ---
 if(WIN32)
     target_sources(Squared PRIVATE ${CMAKE_SOURCE_DIR}/assets/icons/squared.rc)
-elseif(APPLE AND NOT ANDROID)
+elseif(APPLE AND NOT ANDROID AND NOT IOS)
     set_target_properties(Squared PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_ICON_FILE squared.icns
@@ -50,6 +50,25 @@ elseif(APPLE AND NOT ANDROID)
     set(MACOS_ICON "${CMAKE_SOURCE_DIR}/assets/icons/squared.icns")
     set_source_files_properties(${MACOS_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     target_sources(Squared PRIVATE ${MACOS_ICON})
+elseif(IOS)
+    set_target_properties(Squared PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "Squared"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.squared.app"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+        XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "16.0"
+        XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+    )
+    if(EXISTS "${CMAKE_SOURCE_DIR}/ios/Assets.xcassets")
+        target_sources(Squared PRIVATE "${CMAKE_SOURCE_DIR}/ios/Assets.xcassets")
+        set_source_files_properties("${CMAKE_SOURCE_DIR}/ios/Assets.xcassets"
+            PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    endif()
+    set_target_properties(Squared PROPERTIES
+        XCODE_ATTRIBUTE_INFOPLIST_KEY_UILaunchScreen_Generation YES
+    )
 endif()
 
 # --- Android configuration ---
@@ -78,8 +97,8 @@ if(ANDROID)
     endif()
 endif()
 
-# --- Desktop install (not applicable for Android) ---
-if(NOT ANDROID)
+# --- Desktop install (not applicable for mobile) ---
+if(NOT ANDROID AND NOT IOS)
     install(TARGETS Squared
         BUNDLE  DESTINATION .
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
