@@ -56,7 +56,9 @@ docker rm -f tmpbuild 2>/dev/null || true
 docker build -t squaredcrossbuild .
 docker create --name tmpbuild squaredcrossbuild
 
-# Extract install directory (application + Qt runtime bundled)
+# Extract the application install tree (just the app — bin/ + share/).
+# The Qt runtime is NOT bundled here; it ships separately as
+# qt-pi-binaries.tar.gz and is installed to /usr/local/qt6 on the Pi.
 mkdir -p out
 rm -rf out/install-arm
 docker cp tmpbuild:/build/install-arm ./out/install-arm
@@ -75,12 +77,14 @@ rm -rf project
 
 echo "=== Build complete ==="
 echo ""
-echo "Deploy to Raspberry Pi:"
-echo "  scp -r arm64-pi/out/install-arm/* user@pi:/opt/squared/"
-echo ""
-echo "First-time Qt runtime setup on Pi:"
+echo "First-time Pi setup (Qt runtime + app dir + a couple of runtime libs):"
 echo "  scp arm64-pi/out/qt-pi-binaries.tar.gz user@pi:~/"
 echo "  ssh user@pi 'sudo mkdir -p /usr/local/qt6 && sudo tar -xf qt-pi-binaries.tar.gz -C /usr/local/qt6'"
+echo "  ssh user@pi 'sudo mkdir -p /opt/squared && sudo chown \$USER /opt/squared'"
+echo "  ssh user@pi 'sudo apt-get install -y libxcb-cursor0'   # only needed if you ever use the xcb plugin"
 echo ""
-echo "Run on Pi:"
+echo "Deploy / update the app (re-run this part on every change):"
+echo "  scp -r arm64-pi/out/install-arm/* user@pi:/opt/squared/"
+echo ""
+echo "Run on Pi (no LD_LIBRARY_PATH — Qt is on the binary's RUNPATH):"
 echo "  QT_QPA_PLATFORM=eglfs /opt/squared/bin/Squared"

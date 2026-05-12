@@ -115,6 +115,7 @@ RUN set -e \
     && cd qtbase-everywhere-src-${QT_VERSION} \
     && cmake -GNinja -DCMAKE_BUILD_TYPE=Release \
         -DINPUT_opengl=es2 \
+        -DINPUT_tslib=no \
         -DQT_BUILD_EXAMPLES=OFF -DQT_BUILD_TESTS=OFF \
         -DQT_HOST_PATH=/build/qt6/host \
         -DCMAKE_STAGING_PREFIX=/build/qt6/pi \
@@ -138,6 +139,13 @@ RUN set -e \
 RUN tar -I pigz -cf qt-pi-binaries.tar.gz -C /build/qt6/pi .
 
 # --- Application build (layers above are cached between code changes) ---
+#
+# System-Qt deployment model: the app is *not* bundled with Qt. The Qt runtime
+# ships separately (qt-pi-binaries.tar.gz) and lives at /usr/local/qt6 on the
+# Pi, so we bake that directory into the binary's RUNPATH. At launch the loader
+# finds libQt6*.so there, and Qt — being a relocatable build — derives its
+# prefix from libQt6Core's location and picks up plugins/ and qml/ under
+# /usr/local/qt6 too. No LD_LIBRARY_PATH, no qt.conf needed on the target.
 
 COPY project /build/project
 
@@ -146,5 +154,6 @@ RUN cd /build/project \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_STANDARD=23 \
         -DCMAKE_INSTALL_PREFIX=/build/install-arm \
+        -DCMAKE_INSTALL_RPATH=/usr/local/qt6/lib \
     && cmake --build . --parallel $(nproc) \
     && cmake --install .
