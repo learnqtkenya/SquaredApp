@@ -149,12 +149,22 @@ jobs:
       - name: Trim install
         shell: bash
         run: |
-          cd install
-          for style in FluentWinUI3 Material Imagine Fusion Universal; do
-            rm -rf qml/QtQuick/Controls/$style
-            rm -f lib/libQt6QuickControls2${style}* lib/libQt6QuickControls2${style}StyleImpl*
-          done
-          rm -rf plugins/qmltooling plugins/egldeviceintegrations
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            cd install/Squared.app/Contents/Resources
+            for style in FluentWinUI3 Material Imagine Fusion Universal; do
+              rm -rf "qml/QtQuick/Controls/$style"
+              rm -rf "../Frameworks/QtQuickControls2${style}.framework" \
+                     "../Frameworks/QtQuickControls2${style}StyleImpl.framework"
+            done
+            rm -rf ../PlugIns/qmltooling ../PlugIns/egldeviceintegrations
+          else
+            cd install
+            for style in FluentWinUI3 Material Imagine Fusion Universal; do
+              rm -rf "qml/QtQuick/Controls/$style"
+              rm -f "lib/libQt6QuickControls2${style}"* "lib/libQt6QuickControls2${style}StyleImpl"*
+            done
+            rm -rf plugins/qmltooling plugins/egldeviceintegrations
+          fi
 
       - name: Package (macOS tar.gz)
         if: runner.os == 'macOS'
