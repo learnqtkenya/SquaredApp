@@ -25,7 +25,10 @@ jobs:
 
       - name: Configure
         run: |
-          QT_PREFIX=$(dirname $(dirname $(find /opt -name "Qt6Config.cmake" -path "*/cmake/Qt6/*" ! -path "*arm*" 2>/dev/null | head -1)))
+          QT_PREFIX=$(find /opt -type f -path "*/gcc_64/lib/cmake/Qt6/Qt6Config.cmake" -exec dirname {} \; | sed 's#/lib/cmake/Qt6$##' | head -1)
+          test -n "$QT_PREFIX" || { echo "No desktop Qt kit found"; exit 1; }
+          test -f "$QT_PREFIX/lib/cmake/Qt6DBus/Qt6DBusConfig.cmake" || { echo "Qt6DBus missing in $QT_PREFIX"; exit 1; }
+
           cmake -G Ninja -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$QT_PREFIX" \
